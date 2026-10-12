@@ -1458,18 +1458,41 @@ run("""CREATE TABLE IF NOT EXISTS reviews (user_id TEXT PRIMARY KEY, name TEXT, 
 TEAM_IDS = ["1498514468252942436", "1536879503421345932"]   # Owner, Co-Owner shown on the home page
 
 
+def discord_profile(uid):
+    """The person's own Discord profile name (never their nickname in our server)."""
+    def fetch():
+        try:
+            r = requests.get(f"{DISCORD_API}/users/{uid}", headers=bot_headers(), timeout=10)
+            if r.status_code == 200:
+                u = r.json()
+                return {"username": u.get("global_name") or u.get("username") or "Player", "avatar": avatar_url(u)}
+        except requests.RequestException:
+            pass
+        return None
+    prof = cached(f"profile:{uid}", 600, fetch)
+    if not prof:
+        forget(f"profile:{uid}")
+    return prof
+
+
 def home_user():
     p = session.get("pub")
     if p:
         return p
-    u = session.get("user")
-    return {"id": u["id"], "username": u["name"], "avatar": u.get("avatar", "")} if u else None
+    u = session.get("user")   # staff sign-in: look up their profile name instead of using the server nickname
+    if not u:
+        return None
+    prof = discord_profile(u["id"]) or {}
+    return {"id": u["id"], "username": prof.get("username", "Player"), "avatar": prof.get("avatar") or u.get("avatar", "")}
 
 
 @app.get("/api/home/me")
 def home_me():
     u = home_user()
-    return jsonify(u) if u else ("", 401)
+    if not u:
+        return "", 401
+    run("UPDATE reviews SET name=? WHERE user_id=? AND name!=?", (u["username"], u["id"], u["username"]))   # fixes older reviews saved with a nickname
+    return jsonify(u)
 
 
 @app.get("/api/home/reviews")
