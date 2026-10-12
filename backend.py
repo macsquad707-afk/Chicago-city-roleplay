@@ -45,7 +45,7 @@ if os.path.exists(_env):
 # CONFIG
 # =====================================================================================
 PORT = 3000
-SITE_URL = "https://consolidated-remedy-lamb-instant.trycloudflare.com"    # public address of the site, no trailing slash (use https:// when live)
+SITE_URL = "https://refugees-christine-between-christmas.trycloudflare.com"    # public address of the site, no trailing slash (use https:// when live)
 SECRET_KEY = os.environ["SECRET_KEY"]   # signs login cookies; make it long and random
 DB_PATH = "panel.db"
 STATIC_DIR = "."                          # folder holding index.html and an optional img/ folder
