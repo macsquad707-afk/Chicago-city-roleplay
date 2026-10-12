@@ -370,6 +370,7 @@ def callback_url():
 def auth_login():
     state = secrets.token_urlsafe(24)
     session["oauth_state"] = state
+    session["oauth_mode"] = "public" if request.args.get("mode") == "public" else "staff"
     return redirect("https://discord.com/oauth2/authorize?" + urlencode({
         "client_id": DISCORD_CLIENT_ID, "redirect_uri": callback_url(),
         "response_type": "code", "scope": "identify", "state": state, "prompt": "none"}))
@@ -377,34 +378,45 @@ def auth_login():
 
 @app.get("/auth/callback")
 def auth_callback():
+    mode = session.pop("oauth_mode", "staff")
+    bad = "/?error=login" if mode == "public" else "/login?error=login"
     code = request.args.get("code")
     if not code or not request.args.get("state") or request.args.get("state") != session.pop("oauth_state", None):
-        return redirect("/login?error=login")
+        return redirect(bad)
     try:
         t = requests.post(f"{DISCORD_API}/oauth2/token", data={
             "client_id": DISCORD_CLIENT_ID, "client_secret": DISCORD_CLIENT_SECRET, "grant_type": "authorization_code",
             "code": code, "redirect_uri": callback_url()},
             headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=10)
         if t.status_code != 200:
-            return redirect("/login?error=login")
+            return redirect(bad)
         me = requests.get(f"{DISCORD_API}/users/@me", headers={"Authorization": "Bearer " + t.json()["access_token"]}, timeout=10)
         if me.status_code != 200:
-            return redirect("/login?error=login")
+            return redirect(bad)
     except (requests.RequestException, KeyError, ValueError):
-        return redirect("/login?error=login")
+        return redirect(bad)
     user = me.json()
     status, member = discord_member(user["id"])
+    if mode == "public":   # sign-in from the home page: anyone can sign in; staff also get panel access
+        session.clear()
+        session.permanent = True
+        session["pub"] = {"id": user["id"], "username": user.get("global_name") or user.get("username") or "Player",
+                          "avatar": avatar_url(user)}
+        if status == 200 and has_access(user["id"], member):
+            session["user"] = {"id": user["id"], "name": display_name(member), "avatar": avatar_url(user),
+                               "checked": time.time()}
+        return redirect("/")
     if status == 404:
         return redirect("/login?error=noaccess")
     if status != 200:
-        return redirect("/login?error=login")
+        return redirect(bad)
     if not has_access(user["id"], member):
         return redirect("/login?error=noaccess")
     session.clear()
     session.permanent = True
     session["user"] = {"id": user["id"], "name": display_name(member), "avatar": avatar_url(user),
                        "checked": time.time()}
-    return redirect("/")
+    return redirect("/panel")
 
 
 @app.post("/auth/logout")
@@ -1438,12 +1450,87 @@ def public_stats():
                    maxPlayers=d.get("MaxPlayers") or 0, name=d.get("Name") or "", uniqueThisWeek=week, trend=trend)
 
 
+# ------------------------------------------------------------------------------ home page (public)
+run("""CREATE TABLE IF NOT EXISTS reviews (user_id TEXT PRIMARY KEY, name TEXT, avatar TEXT,
+       stars INTEGER, text TEXT, at INTEGER)""")
+TEAM_IDS = ["1498514468252942436", "1536879503421345932"]   # Owner, Co-Owner shown on the home page
+
+
+def home_user():
+    p = session.get("pub")
+    if p:
+        return p
+    u = session.get("user")
+    return {"id": u["id"], "username": u["name"], "avatar": u.get("avatar", "")} if u else None
+
+
+@app.get("/api/home/me")
+def home_me():
+    u = home_user()
+    return jsonify(u) if u else ("", 401)
+
+
+@app.get("/api/home/reviews")
+def home_reviews():
+    return jsonify(rows("SELECT name, stars, text FROM reviews ORDER BY at DESC LIMIT 50"))
+
+
+@app.post("/api/home/reviews")
+def home_review_post():
+    if request.headers.get("X-Requested-With") != "panel":
+        return jsonify(error="Bad request."), 403
+    u = home_user()
+    if not u:
+        return jsonify(error="Sign in required."), 401
+    d = request.get_json(silent=True) or {}
+    text = " ".join(str(d.get("text", "")).split())[:240]
+    try:
+        stars = min(5, max(1, int(d.get("stars", 5))))
+    except (TypeError, ValueError):
+        stars = 5
+    if len(text) < 3:
+        return jsonify(error="Write a bit more."), 400
+    run("""INSERT INTO reviews (user_id, name, avatar, stars, text, at) VALUES (?,?,?,?,?,?)
+           ON CONFLICT(user_id) DO UPDATE SET name=excluded.name, avatar=excluded.avatar,
+           stars=excluded.stars, text=excluded.text, at=excluded.at""",
+        (u["id"], u["username"], u.get("avatar", ""), stars, text, now_ms()))
+    return jsonify(ok=True)
+
+
+def fetch_team():
+    out = {}
+    for uid in TEAM_IDS:
+        try:
+            r = requests.get(f"{DISCORD_API}/users/{uid}", headers=bot_headers(), timeout=10)
+            if r.status_code == 200:
+                u = r.json()
+                out[uid] = {"name": u.get("global_name") or u.get("username"), "avatar": avatar_url(u)}
+        except requests.RequestException:
+            pass
+    return out
+
+
+@app.get("/api/home/team")
+def home_team():
+    return jsonify(cached("home_team", 600, fetch_team))
+
+
 # ------------------------------------------------------------------------------ pages
 @app.get("/")
 def page_home():
+    return send_from_directory(STATIC_DIR, "home.html")
+
+
+@app.get("/panel")
+def page_panel():
     if not current_user():
         return redirect("/login")
     return send_from_directory(STATIC_DIR, "index.html")
+
+
+@app.get("/home.js")
+def page_home_js():
+    return send_from_directory(STATIC_DIR, "home.js")
 
 
 LOGIN_ERRORS = {
@@ -1455,7 +1542,7 @@ LOGIN_ERRORS = {
 @app.get("/login")
 def page_login():
     if current_user():
-        return redirect("/")
+        return redirect("/panel")
     with open(os.path.join(STATIC_DIR, "login.html")) as f:
         page = f.read()
     msg = LOGIN_ERRORS.get(request.args.get("error"))
