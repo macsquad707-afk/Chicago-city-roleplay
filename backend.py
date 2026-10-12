@@ -416,6 +416,8 @@ def auth_callback():
     session.permanent = True
     session["user"] = {"id": user["id"], "name": display_name(member), "avatar": avatar_url(user),
                        "checked": time.time()}
+    session["pub"] = {"id": user["id"], "username": user.get("global_name") or user.get("username") or "Player",
+                      "avatar": avatar_url(user)}
     return redirect("/panel")
 
 
@@ -1472,7 +1474,13 @@ def home_me():
 
 @app.get("/api/home/reviews")
 def home_reviews():
-    return jsonify(rows("SELECT name, stars, text FROM reviews ORDER BY at DESC LIMIT 50"))
+    u = home_user()
+    uid = u["id"] if u else None
+    out = rows("SELECT user_id, name, stars, text FROM reviews ORDER BY at DESC LIMIT 50")
+    mine = rows("SELECT user_id, name, stars, text FROM reviews WHERE user_id=?", (uid,)) if uid else []
+    if mine and all(r["user_id"] != uid for r in out):
+        out = mine + out    # their own review always comes back so they can edit it
+    return jsonify([{"name": r["name"], "stars": r["stars"], "text": r["text"], "mine": r["user_id"] == uid} for r in out])
 
 
 @app.post("/api/home/reviews")
