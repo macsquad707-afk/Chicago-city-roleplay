@@ -85,16 +85,17 @@ drawRate();
 // reviews
 let hasReview = false;
 function renderReviews(list){
-  const track = $('track'), box = track.parentElement;
-  track.style.animation = 'none';
-  if (!list.length){ track.innerHTML = '<p class="note" style="padding:0 24px">No reviews yet.</p>'; return; }
-  const card = r => `<div class="rev"><b>${esc(r.name)}</b><div class="stars">${'★'.repeat(r.stars||5)}</div><p>${esc(r.text)}</p></div>`;
-  const html = list.map(card).join('');
-  track.innerHTML = html;
-  // only scroll (and repeat for a seamless loop) when the cards don't fit on screen
-  if (track.scrollWidth > box.clientWidth){ track.innerHTML = html + html; track.style.animation = ''; }
-  else track.style.paddingLeft = '24px';
+  if (!list.length){ $('track').innerHTML = '<p class="note">No reviews yet.</p>'; return; }
+  $('track').innerHTML = list.map(r => `<div class="rev"><b>${esc(r.name)}</b><div class="stars">${'★'.repeat(r.stars||5)}</div><p>${esc(r.text)}</p></div>`).join('');
 }
+// scroll the strip: arrows, mouse drag, or swipe / shift+wheel
+const strip = $('track').parentElement;
+$('revPrev').onclick = () => strip.scrollBy({left: -528, behavior: 'smooth'});
+$('revNext').onclick = () => strip.scrollBy({left: 528, behavior: 'smooth'});
+let drag = null;
+strip.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') { drag = {x: e.clientX, left: strip.scrollLeft}; strip.classList.add('drag'); } });
+window.addEventListener('pointermove', e => { if (drag) strip.scrollLeft = drag.left - (e.clientX - drag.x); });
+window.addEventListener('pointerup', () => { drag = null; strip.classList.remove('drag'); });
 async function loadReviews(initial = true){
   try{
     const r = await fetch(REVIEWS_URL, {credentials:'include'});
