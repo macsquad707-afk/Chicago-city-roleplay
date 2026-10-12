@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Moderator Panel</title>
+<meta name="theme-color" content="#121212">
+<title>Ohio Moderation</title>
+<link rel="icon" type="image/webp" href="/logo.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -38,9 +40,32 @@
   .sidebar {
     width: 250px; flex: none; height: 100vh; overflow-y: auto;
     background: var(--side); border-right: 1px solid var(--border);
-    padding: 22px 8px;
+    padding: 22px 8px; transition: width .15s ease;
   }
-  .group + .group { margin-top: 26px; }
+  .side-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px 0 14px; margin: -6px 0 22px; }
+  .side-name { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 14.5px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+  .side-name img { width: 28px; height: 28px; flex: none; object-fit: contain; }
+  .side-name .lbl { overflow: hidden; text-overflow: ellipsis; }
+  .side-toggle {
+    width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 8px;
+    background: none; color: var(--label); cursor: pointer; transition: background .15s, color .15s, transform .1s;
+  }
+  .side-toggle svg { width: 18px; height: 18px; }
+  .side-toggle:hover { background: var(--hover); color: var(--text); }
+  .side-toggle:active { transform: scale(.94); }
+  .side-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* chevron points the way the sidebar will move */
+  .side-chev { transition: transform .2s ease; transform-box: fill-box; transform-origin: center; }
+  body.side-closed .side-chev { transform: rotate(180deg); }
+  @media (min-width: 761px) {
+    body.side-closed .sidebar { width: 64px; overflow-x: hidden; }
+    body.side-closed .group-label { display: none; }
+    body.side-closed .side-top { justify-content: center; padding: 0; }
+    body.side-closed .side-name { display: none; }
+    /* hidden visually but kept for screen readers */
+    body.side-closed .lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  }
+  .group + .group, .logout { margin-top: 26px; }
   .group-label {
     font-size: 12.5px; font-weight: 500;
     color: var(--label); padding: 0 14px; margin: 0 0 10px;
@@ -48,7 +73,7 @@
   .item {
     position: relative;
     display: flex; align-items: center; gap: 14px;
-    width: 100%; border: 0; background: none; cursor: pointer; text-align: left;
+    width: 100%; border: 0; background: none; cursor: pointer; text-align: left; text-decoration: none;
     color: var(--muted); font: inherit; font-size: 14.5px; font-weight: 500;
     padding: 9px 14px; border-radius: 8px; margin-bottom: 4px;
   }
@@ -76,9 +101,12 @@
     display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; margin-bottom: 16px;
     background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
   }
-  .stat { background: var(--surface); padding: 16px 18px 14px; box-shadow: inset 0 2px 0 color-mix(in srgb, var(--tint) 55%, transparent); }
+  .stat { background: var(--surface); padding: 16px 18px 14px; }
+  /* only a stat that needs action gets its color */
+  .stat.hot { box-shadow: inset 0 2px 0 color-mix(in srgb, var(--tint) 55%, transparent); }
   .stat-top { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 500; color: var(--muted); }
-  .stat-icon { display: grid; place-items: center; color: var(--tint); }
+  .stat-icon { display: grid; place-items: center; color: var(--label); }
+  .stat.hot .stat-icon, .stat.hot .stat-value { color: var(--tint); }
   .stat-icon svg { width: 16px; height: 16px; }
   .stat-value { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; margin: 14px 0 6px; color: var(--ink); }
   .stat-note { font-size: 12px; color: var(--label); min-height: 14px; }
@@ -106,6 +134,11 @@
   .row-icon.command { background: #222; color: #bdbdbd; }
   .row-icon.join { background: #0f2a1d; color: #3ddc97; }
   .row-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row.call { height: 52px; }
+  .row.call .row-text b, .row.call .row-text small { display: block; overflow: hidden; text-overflow: ellipsis; }
+  .row.call .row-text small { margin-top: 2px; font-size: 12px; color: var(--label); }
+  .call-wait { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; background: rgba(245,166,35,.12); color: #f5a623; font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .call-wait svg { width: 12px; height: 12px; }
   .row-time { font-size: 12px; color: var(--label); flex: none; }
 
   .empty { height: 100%; min-height: 170px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--muted); font-size: 13.5px; padding: 24px; }
@@ -152,7 +185,8 @@
   .players tr + tr td { border-top: 1px solid var(--border); }
   .players tbody tr:hover td { background: #141414; }
   .pl { display: flex; align-items: center; gap: 10px; }
-  .avatar { width: 30px; height: 30px; border-radius: 8px; background: #1f1f1f; color: var(--label); display: grid; place-items: center; font-size: 12px; font-weight: 600; flex: none; }
+  .avatar { position: relative; overflow: hidden; width: 30px; height: 30px; border-radius: 8px; background: #1f1f1f; color: var(--label); display: grid; place-items: center; font-size: 12px; font-weight: 600; flex: none; }
+  .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #1f1f1f; }
   .pname { color: var(--ink); font-weight: 600; font-size: 13.5px; }
   .team { display: inline-flex; align-items: center; gap: 7px; color: var(--ink); font-weight: 500; }
   .team i { width: 8px; height: 8px; border-radius: 50%; background: var(--dot, #6f6f6f); }
@@ -176,6 +210,11 @@
     color: var(--text); font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer;
   }
   .btn-ghost:hover { background: #1c1c1c; }
+  .btn-ghost { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-ghost svg { width: 15px; height: 15px; flex: none; }
+  .menu button svg { width: 15px; height: 15px; flex: none; color: var(--muted); }
+  .menu button:disabled svg { color: inherit; }
+  .q-empty svg { width: 24px; height: 24px; color: var(--muted); margin-bottom: 6px; }
 
   .filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
   .filter-row .spacer { flex: 1; }
@@ -197,14 +236,15 @@
   .empty-card p { margin: 0 auto; max-width: 380px; font-size: 12.5px; line-height: 1.6; color: var(--label); }
 
   .case { color: var(--label); font-size: 12px; white-space: nowrap; }
-  .reason { max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .reason a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; margin-left: 8px; font-size: 12px; }
+  .reason { display: flex; align-items: baseline; max-width: 380px; }
+  .reason span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .reason a { flex: none; color: var(--text); text-decoration: underline; text-underline-offset: 2px; margin-left: 8px; font-size: 12px; }
   .reason a:hover { text-decoration: underline; }
   .dur { display: block; margin-top: 3px; font-size: 12px; color: var(--label); }
 
   .modal-back {
     position: fixed; inset: 0; z-index: 50; background: rgba(2,3,6,.72); backdrop-filter: blur(3px);
-    display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; overflow-y: auto;
+    display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; overflow-y: auto; overscroll-behavior: contain;
   }
   .modal { width: 100%; max-width: 572px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
   .modal-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
@@ -215,6 +255,9 @@
   .x:focus-visible { outline: 2px solid var(--accent); }
   .x svg { width: 16px; height: 16px; }
   .modal-body { padding: 16px 16px 8px; }
+  .modal-sm { max-width: 420px; margin-top: 15vh; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; max-width: min(480px, calc(100vw - 32px));
+    padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--raised); color: var(--ink); font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
   .modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 16px; border-top: 1px solid var(--border); }
 
   .types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
@@ -248,7 +291,7 @@
   .pm-text small { display: block; margin-top: 3px; font-size: 12px; font-weight: 400; color: var(--muted); }
   [hidden] { display: none !important; }
 
-  @media (max-width: 560px) { .types { grid-template-columns: repeat(2, 1fr); } .filter-row .spacer { display: none; } }
+  @media (max-width: 560px) { .types { grid-template-columns: repeat(2, 1fr); } .filter-row .spacer { display: none; } .filter-row .search { flex: 1 1 100%; } .filter-row .search input { width: 100%; } }
 
 
   .logbadge {
@@ -311,7 +354,7 @@
   .lm-tip b { color: var(--ink); font-size: 12.5px; }
   .lm-pin:hover .lm-tip, .lm-pin:focus-visible .lm-tip { display: flex; }
   .lm-pin.sel .lm-tip { display: none; }
-  .lm-card { position: absolute; left: 16px; top: 16px; width: 260px; border: 1px solid #2c2c2c; border-radius: 12px; background: var(--raised); cursor: default; overflow: hidden; z-index: 5; }
+  .lm-card { position: absolute; left: 16px; top: 16px; width: 260px; border: 1px solid #2c2c2c; border-radius: 12px; background: var(--raised); cursor: grab; touch-action: none; user-select: none; overflow: hidden; z-index: 5; }
   .lm-card-av { height: 170px; background: radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--c) 30%, transparent), transparent 70%), #0e0e0e; display: grid; place-items: center; }
   .lm-card-av img { width: 170px; height: 170px; object-fit: contain; }
   .lm-card-body { padding: 12px 14px 14px; display: grid; gap: 8px; }
@@ -321,7 +364,7 @@
   .lm-card-body dd { margin: 0; color: var(--text); overflow-wrap: anywhere; }
   .lm-card-body dd i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 6px; }
   .lm-card-body a { font-size: 12.5px; color: var(--accent); }
-  .lm-card-x { position: absolute; right: 6px; top: 6px; }
+  .lm-card-x { position: absolute; right: 6px; top: 6px; border-radius: 6px; }
   @media (max-width: 700px) { .lm-card { left: 8px; right: 8px; top: 8px; width: auto; } .lm-card-av { height: 120px; } .lm-card-av img { width: 120px; height: 120px; } }
 
   .lm-ctrl { position: absolute; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 10px; cursor: default; }
@@ -337,7 +380,7 @@
   .lm-note { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; pointer-events: none; }
 
   @media (max-width: 760px) {
-    .lm { flex-direction: column; height: 88vh; }
+    .lm { flex-direction: column; height: calc(100dvh - 64px); }   /* fill the screen under the sticky nav */
     .lm-side { width: 100%; max-height: 42%; border-right: 0; border-bottom: 1px solid var(--border); }
   }
 
@@ -431,10 +474,220 @@
   .dots-btn:focus-visible { outline: 2px solid var(--accent); }
   .dots-btn svg { width: 16px; height: 16px; }
   .menu { position: fixed; z-index: 60; min-width: 176px; padding: 6px; border: 1px solid #2c2c2c; border-radius: 10px; background: var(--raised); box-shadow: 0 12px 30px rgba(0,0,0,.55); }
-  .menu button { display: block; width: 100%; text-align: left; padding: 8px 10px; border: 0; border-radius: 6px; background: none; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+  .menu button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border: 0; border-radius: 6px; background: none; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
   .menu button:hover:not(:disabled), .menu button:focus-visible { background: #1f1f1f; outline: none; }
   .menu button:disabled { color: #4f4f4f; cursor: default; }
+  .staff-row, .click-row { cursor: pointer; }
+  .staff-row:hover, .click-row:hover { background: var(--hover); }
+  .staff-row:focus-visible, .click-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
+  /* ---------- Staff profile drawer ---------- */
+  .drawer-back { position: fixed; inset: 0; z-index: 50; background: rgba(2,3,6,.6); display: flex; justify-content: flex-end; }
+  .drawer { width: 452px; max-width: 100vw; height: 100%; overflow-y: auto; overscroll-behavior: contain; background: var(--surface); border-left: 1px solid var(--border); }
+  .pf-head { display: flex; align-items: flex-start; gap: 14px; padding: 10px 16px 20px; border-bottom: 1px solid var(--border); }
+  .mavatar.xl { width: 56px; height: 56px; font-size: 18px; margin-top: 2px; }
+  .pf-who { flex: 1; min-width: 0; padding-top: 2px; }
+  .pf-who h2 { margin: 0 0 6px; font-size: 17px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+  .pf-who p { margin: 0 0 8px; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+  .pf-tags { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+  .pf-off { color: var(--label); }
+  .pf-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--border); }
+  .pf-stats div { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 6px; text-align: center; }
+  .pf-stats div + div { border-left: 1px solid var(--border); }
+  .pf-stats b { font-size: 14.5px; color: var(--ink); min-height: 20px; display: flex; align-items: center; }
+  .pf-stats span { font-size: 11.5px; color: var(--label); }
+  .pf-body { padding: 16px; }
+  .pf-body .empty { min-height: 120px; }
+  .pf-tools { display: flex; justify-content: flex-end; margin: 14px 0 6px; }
+  .pf-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 4px; }
+  .pf-body .seg + div > .pf-row:first-child { margin-top: 8px; }
+  .pf-dot { width: 7px; height: 7px; margin-top: 6px; border-radius: 50%; background: #3a3a3a; flex: none; }
+  .pf-row.is-live .pf-dot { background: #3ddc97; }
+  .pf-row.is-revoked .pf-dot { background: #7f2d33; }
+  .pf-main { flex: 1; min-width: 0; }
+  .pf-main b { display: block; font-size: 13.5px; font-weight: 600; color: var(--ink); }
+  .pf-main small { display: block; margin-top: 3px; font-size: 12px; color: var(--label); }
+  .pf-dur { font-family: var(--mono); font-size: 12px; color: var(--ink); padding-top: 2px; white-space: nowrap; }
+  .pf-acts { display: flex; gap: 2px; margin-top: -4px; }
+  .pf-acts svg { width: 15px; height: 15px; }
+  .avatar.xl { width: 56px; height: 56px; border-radius: 12px; font-size: 18px; margin-top: 2px; }
+  /* Moderation log drawer: the reason is the content, everything else is supporting detail */
+  .drawer.ld { display: flex; flex-direction: column; }
+  .ld-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 0 20px; }
+  .ld-meta { display: flex; align-items: center; min-width: 0; }
+  .ld-meta .logid { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ld-who { display: flex; align-items: center; gap: 14px; margin: 18px 20px 0; }
+  .ld-who .avatar.xl { margin-top: 0; }
+  .ld-title { margin: 0; min-width: 0; font-size: 20px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; text-wrap: balance; }
+  .ld-reason { margin: 14px 20px 22px; padding: 2px 0 2px 14px; border-left: 2px solid var(--c); font-size: 15px; line-height: 1.6; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; max-width: 65ch; }
+  .ld-list { margin: 0; padding: 18px 20px; display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px 16px; align-items: center; font-size: 13.5px; border-top: 1px solid var(--border); }
+  .ld-list dt { color: var(--label); }
+  .ld-list dd { margin: 0; min-width: 0; color: var(--text); }
+  .ld-ago { margin-left: 6px; color: var(--label); }
+  .ld-link { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; color: var(--accent); text-underline-offset: 3px; }
+  .ld-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ld-link svg { width: 13px; height: 13px; flex: none; }
+  .ld-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  .ld-foot { margin-top: auto; padding: 14px 20px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); }
+  .pp-actions { display: flex; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .pp-actions a { display: inline-flex; align-items: center; text-decoration: none; }
+  .pp-reason { display: block; margin-top: 3px; font-size: 13px; line-height: 1.45; color: var(--text); overflow-wrap: anywhere; }
+  .pp-reason a { color: var(--muted); text-underline-offset: 2px; }
+  .pp-dur { margin-left: 6px; font-size: 12px; font-weight: 500; color: var(--label); }
+  .pp-feed { margin-top: 8px; } .pp-feed .row { padding: 8px 4px; }
+
+  /* ---------- Settings ---------- */
+  .set-wrap { display: grid; grid-template-columns: 168px minmax(0, 860px); gap: 40px; align-items: start; }
+  .set-rail { position: sticky; top: 0; display: flex; flex-direction: column; gap: 2px; padding-top: 4px; }
+  .set-rail a { padding: 7px 10px; border-radius: 7px; color: var(--muted); font-size: 13.5px; text-decoration: none; }
+  .set-rail a:hover { background: var(--hover); color: var(--ink); }
+  .set-rail a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .set-main { min-width: 0; }
+  .set-sec { scroll-margin-top: 16px; padding-bottom: 36px; }
+  .set-sec h2 { margin: 0 0 6px; font-size: 16px; font-weight: 600; color: var(--ink); }
+  .set-sec > p { margin: 0 0 16px; max-width: 62ch; font-size: 13px; line-height: 1.55; color: var(--muted); }
+
+  .lad { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 6px 0 8px; overflow-x: auto; }
+  .lad-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(var(--cols, 4), 76px); align-items: center; gap: 6px; padding: 3px 14px 3px 18px; }
+  .lad-row:not(.lad-head):hover { background: #1a1a1a; }
+  .lad-head { padding-top: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+  .lad-rank { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .lad-rank i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+  .lad-group { padding: 14px 18px 4px; font-size: 12px; font-weight: 600; color: var(--label); }
+  .lad-label { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 13.5px; color: var(--text); padding: 8px 0; }
+  .lad-ico svg { width: 15px; height: 15px; display: block; }
+  .lad-cell { position: relative; display: block; cursor: pointer; }
+  .lad-cell input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .lad-pip { display: grid; place-items: center; height: 30px; border-radius: 8px; border: 1px solid #242424; background: #141414; color: transparent; transition: background .12s, border-color .12s; }
+  .lad-pip svg { width: 15px; height: 15px; }
+  .lad-cell:hover .lad-pip { border-color: #3a3a3a; }
+  /* ranks above the chosen one get a quiet neutral fill; only the chosen rank (where access starts) carries its color */
+  .lad:not(.multi) .lad-cell:has(input:checked) ~ .lad-cell .lad-pip { background: #202020; border-color: #2e2e2e; color: #9a9a9a; }
+  .lad-cell:has(input:checked) .lad-pip { background: color-mix(in srgb, var(--c) 16%, transparent); border-color: color-mix(in srgb, var(--c) 60%, transparent); color: var(--c); }
+  .lad-cell input:focus-visible + .lad-pip { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .set-card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .set-line { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 16px 18px; }
+  .set-line + .set-line { border-top: 1px solid var(--border); }
+  .set-line.col { flex-direction: column; align-items: stretch; gap: 12px; }
+  label.set-line { cursor: pointer; }
+  .set-text { min-width: 0; }
+  .set-text b { display: block; font-size: 13.5px; font-weight: 600; color: var(--ink); }
+  .set-text small { display: block; margin-top: 4px; max-width: 58ch; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 2px; height: 28px; padding: 0 4px 0 10px; border: 1px solid var(--border-hi); border-radius: 7px; background: var(--raised); font-family: var(--mono); font-size: 12.5px; color: var(--ink); }
+  .chip button { display: grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 5px; background: none; color: var(--label); cursor: pointer; }
+  .chip button:hover { background: #2a2a2a; color: var(--ink); }
+  .chip button:focus-visible { outline: 2px solid var(--accent); }
+  .chip button svg { width: 12px; height: 12px; }
+  .chip-empty { font-size: 12.5px; color: var(--label); }
+  .chip-add { display: flex; gap: 8px; }
+  .chip-add input { width: 200px; height: 32px; padding: 0 10px; border: 1px solid var(--border-hi); border-radius: 8px; background: #141414; color: var(--ink); font-family: var(--mono); font-size: 12.5px; }
+  .chip-add input::placeholder { color: #6a6a6a; }
+  .chip-add input:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .set-err { color: #f87171; font-size: 12.5px; }
+  .set-err:empty { display: none; }
+
+  .stepper { display: inline-flex; align-items: center; flex: none; height: 34px; border: 1px solid var(--border-hi); border-radius: 8px; background: #141414; }
+  .stepper:focus-within { border-color: var(--accent); }
+  .stepper button { display: grid; place-items: center; width: 32px; height: 100%; border: 0; background: none; color: var(--muted); cursor: pointer; }
+  .stepper button:hover { color: var(--ink); background: var(--hover); }
+  .stepper button:first-child { border-radius: 7px 0 0 7px; } .stepper button:last-child { border-radius: 0 7px 7px 0; }
+  .stepper button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .stepper button svg { width: 13px; height: 13px; }
+  .stepper input { width: 44px; height: 100%; border: 0; background: none; color: var(--ink); font-family: var(--mono); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; -moz-appearance: textfield; }
+  .stepper input::-webkit-inner-spin-button, .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .stepper input:focus { outline: none; }
+  .stepper .unit { padding: 0 8px 0 6px; font-size: 12.5px; color: var(--label); min-width: 52px; }
+
+  .savebar { position: sticky; bottom: 16px; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 18px;
+    border: 1px solid var(--border-hi); border-radius: 12px; background: var(--raised); box-shadow: 0 12px 32px rgba(0,0,0,.5); }
+  .savebar[hidden] { display: none; }
+  #setMsg { margin-right: auto; font-size: 13px; color: var(--text); }
+  #setMsg.ok { color: #3ddc97; } #setMsg.bad { color: #f87171; }
+  @media (prefers-reduced-motion: no-preference) { .savebar { animation: barIn .18s ease-out; } }
+  @keyframes barIn { from { opacity: 0; transform: translateY(8px); } }
+
+  .set-skel { grid-column: 2; display: grid; gap: 14px; }
+  .set-skel i { display: block; height: 180px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+  .set-skel i:first-child { height: 380px; }
+
+  @media (max-width: 1100px) { .set-wrap { grid-template-columns: minmax(0, 1fr); } .set-rail { display: none; } .set-skel { grid-column: 1; } }
+  @media (max-width: 640px) {
+    .lad-row { grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); padding: 2px 12px; }
+    .lad-head span:first-child { display: none; }
+    .lad-label { grid-column: 1 / -1; padding: 10px 0 4px; }
+    .set-line { flex-direction: column; align-items: stretch; gap: 12px; }
+    label.set-line { flex-direction: row; align-items: center; }
+    .chip-add input { flex: 1; width: auto; }
+  }
+
+
+  /* ---------- Roles ---------- */
+  .role-row { display: flex; align-items: center; gap: 14px; padding: 12px 18px; }
+  .role-row + .role-row { border-top: 1px solid var(--border); }
+  .role-swatch { width: 12px; height: 12px; border-radius: 50%; background: var(--c); flex: none; }
+  .role-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .role-main b { color: var(--ink); font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .role-main small { color: var(--label); font-size: 12px; }
+  .role-acts { display: flex; gap: 2px; flex: none; }
+  .role-acts .dots-btn:disabled { opacity: .35; cursor: default; }
+  .role-list { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+  .role-pick { display: grid; gap: 6px; margin-bottom: 12px; }
+  .role-opt { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--raised); cursor: pointer; font-size: 13.5px; color: var(--text); }
+  .role-opt input { width: 16px; height: 16px; margin: 0; accent-color: var(--c); }
+  .role-opt i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; }
+  .role-opt span { flex: 1; }
+  .role-opt small { font-size: 12px; color: var(--label); }
+  .role-opt.locked { cursor: not-allowed; opacity: .6; }
+  .role-opt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .role-fields input[type=color] { height: 40px; padding: 4px; cursor: pointer; }
+  .set-none { margin: 0; padding: 16px 18px; font-size: 13px; color: var(--muted); }
+  .set-none a { color: var(--ink); }
+
+  /* ---------- Quotas & leave ---------- */
+  .q-tools { display: flex; gap: 8px; }
+  .q-banner { border: 1px solid color-mix(in srgb, #f5a623 35%, transparent); background: color-mix(in srgb, #f5a623 7%, transparent);
+    color: #f3d9a6; border-radius: 12px; padding: 12px 16px; font-size: 13.5px; line-height: 1.5; margin-bottom: 16px; }
+  .q-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; align-items: start; }
+  .q-col { display: grid; gap: 16px; min-width: 0; }
+  .q-mine { padding: 16px 18px 18px; }
+  .q-big { font-family: var(--mono); font-size: 26px; font-weight: 600; color: var(--c, var(--ink)); }
+  /* bars carry the status color: met green, behind amber, on leave cyan, no quota grey */
+  .lb-bar.q-bar i { background: var(--c, var(--muted)); }
+  .q-row.lead { background: linear-gradient(90deg, color-mix(in srgb, #f5c518 7%, transparent), transparent 60%); }
+  .q-count.good, .q-past .good { color: #22c55e; } .q-past .warn { color: #f5a623; }
+  .q-note { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+  .q-count { color: var(--label); font-size: 12.5px; font-weight: 400; }
+  .q-row, .q-leave { display: flex; align-items: center; gap: 12px; padding: 12px 18px; }
+  .q-row + .q-row, .q-leave + .q-leave, .q-past + .q-past { border-top: 1px solid var(--border); }
+  .q-who { flex: 0 1 180px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .q-who b { color: var(--ink); font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .q-who span { color: var(--label); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .q-bar { flex: 1; margin: 0; }
+  .q-time { min-width: 84px; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink); }
+  .q-time span { color: var(--label); }
+  .q-row .badge { min-width: 76px; text-align: center; }
+  .q-leave .q-who { flex: 1; }
+  .q-acts { display: flex; gap: 6px; flex: none; }
+  .q-foot { margin: 0; padding: 10px 18px 14px; border-top: 1px solid var(--border); font-size: 12px; line-height: 1.5; color: var(--label); }
+  .q-past { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 18px; font-size: 13.5px; color: var(--muted); }
+  .q-past b { color: var(--ink); font-weight: 600; }
+  .q-past small { grid-column: 1 / -1; font-size: 12px; color: var(--label); }
+  .q-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 40px 18px; text-align: center; }
+  .q-empty b { font-size: 13.5px; font-weight: 600; color: var(--text); }
+  .q-empty span { font-size: 12.5px; color: var(--label); }
+  .q-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+  .q-pair .field input { width: 100%; }
+  .modal-body > .pm + .q-pair { margin-top: 18px; }
+  .f-err { margin: 0 0 8px; font-size: 13px; color: #f87171; }
+  .f-err:empty { display: none; }
+  @media (max-width: 900px) { .q-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) {
+    .q-row { flex-wrap: wrap; } .q-who { flex: 1; } .q-bar { order: 5; flex-basis: 100%; }
+    .q-leave { flex-wrap: wrap; } .q-pair { grid-template-columns: 1fr; }
+  }
 
   /* ---------- Shifts ---------- */
   .shifts-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; grid-template-areas: "mine lb" "now lb"; align-items: stretch; }
@@ -471,13 +724,14 @@
   .struck { text-decoration: line-through; color: var(--label); }
   .revoked { margin-left: 8px; padding: 1px 7px; border-radius: 4px; background: #2d1417; color: #f87171; font-size: 12px; font-weight: 600; }
   .mono-m { font-family: var(--mono); font-size: 12px; color: var(--label); }
+  #shRecent { overflow-x: auto; }
   @media (max-width: 900px) { .shifts-grid { grid-template-columns: 1fr; grid-template-areas: "mine" "now" "lb"; } }
 
   @media (max-width: 760px) {
     body { flex-direction: column; }
-    .sidebar { width: 100%; height: auto; border-right: 0; border-bottom: 1px solid var(--border); display: flex; gap: 4px; overflow-x: auto; padding: 8px; }
+    .sidebar { width: 100%; height: auto; border-right: 0; border-bottom: 1px solid var(--border); display: flex; gap: 4px; overflow-x: auto; padding: 8px; position: sticky; top: 0; z-index: 20; }
     .group { display: contents; }
-    .group-label { display: none; }
+    .group-label, .side-top { display: none; }
     .item { width: auto; flex: none; margin: 0; white-space: nowrap; }
     .item.active::before { display: none; }
     .content { height: auto; padding: 24px 18px; }
@@ -486,8 +740,30 @@
   /* Touch: 44px targets on coarse pointers */
   @media (pointer: coarse) {
     .item, .pill, .seg button, .btn-primary, .btn-ghost, .btn-danger, .btn-sm, .search input { min-height: 44px; }
-    .x, .dots-btn, .lm-btn { min-width: 44px; min-height: 44px; }
+    .x, .dots-btn, .lm-btn, .side-toggle { min-width: 44px; min-height: 44px; }
+    /* iOS zooms into inputs under 16px */
+    .field input, .field textarea, .search input, .term-body input { font-size: 16px; }
   }
+  /* ---------- Motion ----------
+     Only motion that explains something: where you went, what opened, what you pressed.
+     Entrances only; things close instantly. The reduced-motion block below switches all of it off. */
+  :root { --ease-out: cubic-bezier(.16, 1, .3, 1); }
+  #view.enter { animation: pageIn .26s var(--ease-out); }
+  .page-head.enter { animation: fadeIn .2s ease-out; }
+  .modal-back, .drawer-back { animation: fadeIn .16s ease-out; }
+  .modal { animation: popIn .22s var(--ease-out); }
+  .drawer { animation: slideIn .26s var(--ease-out); }
+  .menu { animation: menuIn .14s var(--ease-out); transform-origin: top right; }
+  .set-skel i { animation: pulse 1.4s ease-in-out infinite; }
+  .btn-ghost:active:not(:disabled), .btn-danger:active:not(:disabled), .btn-sm:active:not(:disabled),
+  .pill:active, .seg button:active, .dots-btn:active, .x:active, .item:active { transform: translateY(1px); }
+  @keyframes fadeIn { from { opacity: 0; } }
+  @keyframes pageIn { from { opacity: 0; transform: translateY(6px); } }
+  @keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(.985); } }
+  @keyframes slideIn { from { opacity: .4; transform: translateX(32px); } }
+  @keyframes menuIn { from { opacity: 0; transform: scale(.96); } }
+  @keyframes pulse { 50% { opacity: .55; } }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition: none !important; animation: none !important; }
   }
@@ -508,1229 +784,6 @@
   <div id="view"></div>
 </main>
 
-<script>
-  // ---------- CONFIG: edit these ----------
-  const DEFAULT_PAGE = "overview";
-
-  // Simple 24x24 stroke icons
-  const ICONS = {
-    overview:   '<rect x="3" y="3" width="7.5" height="9" rx="2"/><rect x="13.5" y="3" width="7.5" height="5.5" rx="2"/><rect x="3" y="15" width="7.5" height="6" rx="2"/><rect x="13.5" y="11.5" width="7.5" height="9.5" rx="2"/>',
-    players:    '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.7a3.5 3.5 0 010 6.6M18 14.3c2 .7 3.5 2.4 3.5 5.7"/>',
-    livemap:    '<path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5L9 4z"/><path d="M9 4v13.5M15 6.5V20"/>',
-    moderations:'<path d="M14 4l6 6-2 2-6-6 2-2z"/><path d="M12 6L4 14l3 3 8-8"/><path d="M4 21h8"/>',
-    bans:       '<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',
-    serverlogs: '<path d="M7 3h11a1 1 0 011 1v13a3 3 0 01-3 3H6a3 3 0 01-3-3v-1h4"/><path d="M7 3v13M10 8h6M10 12h6"/>',
-    commands:   '<path d="M4 7l5 5-5 5M12 18h8"/>',
-    staff:      '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6 1.6 0 3 .4 4 1.1"/><circle cx="18" cy="17" r="2.2"/><path d="M18 12.8v1.3M18 19.9v1.3M14.4 15l1.1.7M20.5 18.3l1.1.7M14.4 19l1.1-.7M20.5 15.7l1.1-.7"/>',
-    shifts:     '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
-    pulse:      '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
-    warn:       '<path d="M12 3.500L2.500 20h19L12 3.500z"/><path d="M12 10v4.500M12 17.300v.2"/>',
-    stopwatch:  '<circle cx="12" cy="13.500" r="7.500"/><path d="M12 9.500v4l2.500 1.500M9.500 2.500h5M12 2.500v3.500"/>',
-    note:       '<path d="M6 3h8l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2z"/><path d="M14 3v5h5"/>',
-    plus:       '<path d="M12 5v14M5 12h14"/>',
-    close:      '<path d="M6 6l12 12M18 6L6 18"/>',
-    bolt:       '<path d="M13 2.500L4.500 13.500H11L10 21.500 19.500 10H13l0-7.500z"/>',
-    hash:       '<path d="M5 9h14M5 15h14M10 4L8 20M16 4l-2 16"/>',
-    target:     '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.500"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
-    minus:      '<path d="M5 12h14"/>',
-    expand:     '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
-    refresh:    '<path d="M20 6v5h-5M4 18v-5h5"/><path d="M18.500 11A7 7 0 006 8M5.500 13A7 7 0 0018 16"/>',
-    send:       '<path d="M21 3L10 14M21 3l-7 18-4-8-8-4 19-6z"/>',
-    xcircle:    '<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/>',
-    checkcircle:'<circle cx="12" cy="12" r="9"/><path d="M8 12.500l2.700 2.700L16 9.500"/>',
-    chevron:    '<path d="M9 6l6 6-6 6"/>',
-    more:       '<circle cx="5" cy="12" r="1.500" fill="currentColor"/><circle cx="12" cy="12" r="1.500" fill="currentColor"/><circle cx="19" cy="12" r="1.500" fill="currentColor"/>',
-    inbox:      '<path d="M4 13l2-7h12l2 7v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5z"/><path d="M4 13h4l1 2h6l1-2h4"/>',
-    play:       '<path d="M7 4.500v15l12-7.500-12-7.500z"/>',
-    trophy:     '<path d="M8 4h8v5a4 4 0 01-8 0V4zM8 6H5a1 1 0 00-1 1c0 2 1.500 3.500 4 4M16 6h3a1 1 0 011 1c0 2-1.500 3.500-4 4M12 13v4M8.500 20h7M10 17h4"/>',
-    crown:      '<path d="M3 8l4.500 4L12 5l4.500 7L21 8l-2 11H5L3 8z"/>',
-    history:    '<path d="M3 12a9 9 0 109-9 9 9 0 00-7 3.500M3 4v4.500h4.500M12 8v4.500l3 1.500"/>',
-    search:     '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.500-3.500"/>',
-    hourglass:  '<path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/>',
-    shield:     '<path d="M12 3l8 3v6c0 4.6-3.2 8-8 9-4.8-1-8-4.4-8-9V6l8-3z"/><path d="M8.5 12.2l2.5 2.5 4.5-5"/>',
-    phone:      '<path d="M6.5 3.5l2.8 3.6-1.6 2.2a12 12 0 006.8 6.8l2.2-1.6 3.6 2.8-1.4 3c-.4.8-1.3 1.2-2.2 1C9.8 20.200 3.800 14.200 2.700 7.100c-.2-.9.2-1.800 1-2.200l2.800-1.400z"/><path d="M14 4a6 6 0 016 6M14 7.500a2.800 2.800 0 012.500 2.500"/>',
-    eye:        '<path d="M2 12s3.600-7 10-7 10 7 10 7-3.600 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
-    login:      '<path d="M14 4h4a2 2 0 012 2v12a2 2 0 01-2 2h-4M3 12h11M10 8l4 4-4 4"/>',
-    logout:     '<path d="M10 4H6a2 2 0 00-2 2v12a2 2 0 002 2h4M10 12h10M17 8l4 4-4 4"/>'
-  };
-  const ico = n => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]}</svg>`;
-  const esc = t => String(t).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-
-  const NAV = [
-    { group: "Server", items: [
-      { id: "overview", label: "Overview", sub: "A quick look at how the server is doing." },
-      { id: "players",  label: "Players",  sub: "Everyone currently in the server." },
-      { id: "livemap",  label: "Live map", sub: "Live player positions." }
-    ]},
-    { group: "Moderation", items: [
-      { id: "moderations", label: "Moderations", sub: "Warnings, kicks and other actions." },
-      { id: "bans",        label: "Bans",        sub: "Active and past bans." },
-      { id: "serverlogs",  label: "Server logs", sub: "Join, leave, and command logs." },
-      { id: "commands",    label: "Commands",    sub: "Run commands on the server." }
-    ]},
-    { group: "Team", items: [
-      { id: "staff",  label: "Staff",  sub: "Your staff team." },
-      { id: "shifts", label: "Shifts", sub: "Staff shift history." }
-    ]}
-  ];
-
-  // Page renderers: add real UI here as we build each page.
-  // Anything not listed falls back to the placeholder.
-  // Overview data: replace with live values from your backend / ER:LC API later
-  // DISCORD SIGN-IN: after the user signs in with Discord (OAuth) or the bot looks them up,
-  // set these two. Avatar format: https://cdn.discordapp.com/avatars/<user_id>/<avatar_hash>.png
-  // Filled from /api/me after Discord sign-in
-  let USERNAME = "", USER_AVATAR = "", USER_ID = "", USER_RANK = "";
-  let SERVER_NAME = "";   // from ER:LC
-
-  // All panel calls go through here. The X-Requested-With header is what backend.py checks on POSTs.
-  const api = async (path, body) => {
-    const r = await fetch(path, body === undefined ? { cache: "no-store" } : {
-      method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "panel" }, body: JSON.stringify(body) });
-    if (r.status === 401) { if (!location.search.includes("error=")) location.href = "/auth/login"; throw new Error("Sign in required."); }
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.error || `Request failed (${r.status})`);
-    return d;
-  };
-
-  const STATS = [
-    { label: "Players",      value: "–", note: "",                        icon: "players",   tint: "#9aa4b1" },
-    { label: "In queue",     value: "–", note: "",                        icon: "hourglass", tint: "#22b8cf" },
-    { label: "Staff in game",value: "–", note: "",                        icon: "shield",    tint: "#3ddc97" },
-    { label: "Mod calls",    value: "–", note: "waiting for a moderator", icon: "phone",     tint: "#f5a623" },
-    { label: "Logs today",   value: "–", note: "",                        icon: "moderations", tint: "#ef4444" },
-    { label: "Ban BOLOs",    value: "–", note: "",                        icon: "eye",       tint: "#a855f7" }
-  ];
-
-  // ---------- Server logs data ----------
-  // Newest first. type: "command" | "join" | "leave" | "kill" | "modcall"
-  //   command: { user, cmd }   join/leave: { user }   kill: { user, target }   modcall: { user, text? }   all: { at: ms timestamp }
-  // ER:LC only keeps recent logs, so your backend should store them as it polls and serve them from your own database.
-  const LOG_RETENTION_DAYS = 14;
-  const COMMAND_RETENTION_DAYS = 30;
-  const LOGS_ENDPOINT = "/api/logs";
-  const LOGS_POLL_MS = 10000;
-  const SERVER_LOGS = [];
-  // Staff currently clocked in: { name, avatar, started, onBreak, breakStartedAt, breakMs }  (the Shifts page manages this)
-  const ACTIVE_SHIFTS = [];
-  const MODERATIONS = [];  // newest first: { id, type, user, reason, evidence, duration, mod, modAvatar, status, at }
-  const MOD_CALLS   = [];  // { user, at }
-
-  // Players data: filled from /api/state and /api/players
-  let MAX_PLAYERS = 0;
-  const PLAYERS = [];
-  const TEAM_COLORS = { Civilian: "#6b6e75", Police: "#3b82f6", Sheriff: "#3ddc97", Fire: "#ef4444", DOT: "#f5a623", Jail: "#c08457" };
-  // keys are the Permission values ER:LC sends
-  const PERM_COLORS = { "Server Owner": "#e6ebf0", "Server Co-Owner": "#8b5cf6", "Server Administrator": "#ef4444", "Server Moderator": "#f5a623", "Server Helper": "#22b8cf" };
-  const isStaff = p => !!PERM_COLORS[p.permission];
-
-  // Moderation types (labels, colors, descriptions come from your UI)
-  const MOD_TYPES = [
-    { id: "warning", label: "Warning",  color: "#f5a623", icon: "warn",      desc: "A formal warning on their record", verb: "warned",                 cta: "Log warning" },
-    { id: "kick",    label: "Kick",     color: "#f97316", icon: "logout",    desc: "Removed from the server",          verb: "kicked",                 cta: "Log kick" },
-    { id: "ban",     label: "Ban",      color: "#ef4444", icon: "bans",      desc: "Banned until it is lifted",        verb: "banned",                 cta: "Log ban" },
-    { id: "tempban", label: "Temp ban", color: "#f43f5e", icon: "stopwatch", desc: "Banned for a set time",            verb: "temp banned",            cta: "Log temp ban" },
-    { id: "bolo",    label: "Ban BOLO", color: "#a855f7", icon: "eye",       desc: "Ban them as soon as they are back in game", verb: "added a ban BOLO for", cta: "Log ban BOLO" },
-    { id: "note",    label: "Note",     color: "#8b8f98", icon: "note",      desc: "A private note for staff",         verb: "added a note on",        cta: "Log note" }
-  ];
-  const typeById = id => MOD_TYPES.find(t => t.id === id) || MOD_TYPES[0];
-
-  const avatarHtml = (name, url, cls = "") => {
-    const safe = /^https:\/\//i.test(url || "");
-    return `<span class="mavatar ${cls}" ${safe ? `style="background-image:url('${esc(url)}')"` : ""}>${safe ? "" : esc((name || "?").slice(0, 2).toUpperCase())}</span>`;
-  };
-
-  const timeAgo = at => {
-    const s = Math.max(0, Math.floor((Date.now() - at) / 1000));
-    if (s < 60) return "just now";
-    if (s < 3600) return Math.floor(s / 60) + "m ago";
-    if (s < 86400) return Math.floor(s / 3600) + "h ago";
-    return Math.floor(s / 86400) + "d ago";
-  };
-
-  // Opens the "New moderation log" dialog. onSaved(entry) runs after Log is clicked.
-  function openLogModal(onSaved, initialType) {
-    let type = initialType ? typeById(initialType) : MOD_TYPES[0];
-    const opener = document.activeElement;
-    const back = document.createElement("div");
-    back.className = "modal-back";
-    back.innerHTML = `
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
-        <div class="modal-head">
-          <div><h2 id="mTitle">New moderation log</h2><p>Saved to the player's record.</p></div>
-          <button class="x" id="mClose" type="button" aria-label="Close">${ico("close")}</button>
-        </div>
-        <div class="modal-body">
-          <div class="types" id="mTypes"></div>
-          <label class="field"><span>Player <em>*</em></span>
-            <input id="mPlayer" type="text" placeholder="Roblox username" autocomplete="off" list="mPlayerList">
-            <datalist id="mPlayerList">${PLAYERS.map(p => `<option value="${esc(p.name)}"></option>`).join("")}</datalist>
-            <small>Pick someone in game or type a Roblox username.</small>
-          </label>
-          <label class="field" id="mDurWrap" hidden><span>Duration <em>*</em></span>
-            <input id="mDur" type="text" placeholder="e.g. 3 days" autocomplete="off">
-          </label>
-          <label class="field"><span>Reason <em>*</em></span>
-            <textarea id="mReason" placeholder="What happened, and which rule it broke"></textarea>
-          </label>
-          <label class="field"><span>Evidence</span>
-            <input id="mEvidence" type="text" placeholder="https://medal.tv/..." autocomplete="off">
-            <small>A link to a clip or screenshot (optional).</small>
-          </label>
-          <label class="pm" id="mPmWrap">
-            <span class="pm-icon">${ico("bolt")}</span>
-            <span class="pm-text"><span id="mPmTitle"></span><small>Runs through your ER:LC server key.</small></span>
-            <span class="switch"><input type="checkbox" id="mPm" checked><i></i></span>
-          </label>
-        </div>
-        <div class="modal-foot">
-          <button class="btn-ghost" id="mCancel" type="button">Cancel</button>
-          <button class="btn-primary" id="mSubmit" type="button" disabled>Log warning</button>
-        </div>
-      </div>`;
-    document.body.appendChild(back);
-
-    const $ = id => back.querySelector("#" + id);
-    const typesEl = $("mTypes");
-
-    const valid = () => $("mPlayer").value.trim() && $("mReason").value.trim() && (type.id !== "tempban" || $("mDur").value.trim());
-    const refresh = () => {
-      typesEl.innerHTML = MOD_TYPES.map(t => `
-        <button type="button" class="type-card ${t.id === type.id ? "sel" : ""}" data-t="${t.id}" style="--c:${t.color}" aria-pressed="${t.id === type.id}">
-          <span class="tt">${ico(t.icon)}${t.label}</span><span class="td">${t.desc}</span>
-        </button>`).join("");
-      $("mDurWrap").hidden = type.id !== "tempban";
-      const pmOk = type.id === "warning" || type.id === "kick";
-      $("mPmWrap").hidden = !pmOk;
-      $("mPmTitle").textContent = type.id === "kick" ? "Send them the kick reason as an in-game PM" : "Send them the warning as an in-game PM";
-      $("mSubmit").textContent = type.cta;
-      $("mSubmit").disabled = !valid();
-    };
-
-    const close = () => {
-      document.removeEventListener("keydown", onKey);
-      back.remove();
-      if (opener && opener.focus) opener.focus();
-    };
-    const onKey = e => {
-      if (e.key === "Escape") return close();
-      if (e.key !== "Tab") return;
-      const f = [...back.querySelectorAll("button:not(:disabled), input, textarea")].filter(el => el.offsetParent);
-      const first = f[0], last = f[f.length - 1];
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-    };
-    document.addEventListener("keydown", onKey);
-
-    typesEl.addEventListener("click", e => {
-      const b = e.target.closest(".type-card");
-      if (b) { type = typeById(b.dataset.t); refresh(); }
-    });
-    back.addEventListener("input", () => { $("mSubmit").disabled = !valid(); });
-    back.addEventListener("mousedown", e => { if (e.target === back) close(); });
-    $("mClose").onclick = close;
-    $("mCancel").onclick = close;
-    $("mSubmit").onclick = async () => {
-      if (!valid()) return;
-      $("mSubmit").disabled = true;
-      let d;
-      try {
-        d = await api("/api/moderations", {
-          type: type.id,
-          user: $("mPlayer").value.trim(),
-          reason: $("mReason").value.trim(),
-          evidence: $("mEvidence").value.trim(),
-          duration: type.id === "tempban" ? $("mDur").value.trim() : "",
-          pm: !$("mPmWrap").hidden && $("mPm").checked
-        });
-      } catch (err) {
-        alert(err.message);
-        $("mSubmit").disabled = false;
-        return;
-      }
-      MODERATIONS.unshift(d.entry);
-      close();
-      if (d.erlc.sent && !d.erlc.ok) alert("Logged, but ER:LC refused the command: " + d.erlc.error);
-      if (onSaved) onSaved(d.entry);
-    };
-
-    refresh();
-    $("mPlayer").focus();
-  }
-
-  // ---------- Live map config ----------
-  // Best option: download the map image, put it next to this file / on your site, and point MAP_URL at your copy
-  // (e.g. "/img/liberty-map.png"). Remote links can be blocked by previews or hotlink protection.
-  const MAP_URL = "/img/map.png";
-  const MAP_FALLBACKS = ["https://api.erlc.gg/maps/fall_postals.png"];
-  // World-coordinate range the map image covers. Checked against a live player at postal 210. Fine-tune by turning on
-  // SHOW_COORDS, hovering a spot you know (like a postal), and adjusting until the pins line up.
-  const MAP_BOUNDS = { xMin: 0, xMax: 5355, zMin: 0, zMax: 5355 };   // 1 stud = 1 pixel on the 5355px official map
-  const FLIP_Z = false;        // set true if pins look mirrored top-to-bottom
-  const SHOW_COORDS = false;   // shows world X / Z under the cursor (for calibration)
-  // Your backend route that returns the ER:LC v2 response (the browser can't call it directly, see notes).
-  // Leave "" until it exists. e.g. "/api/erlc/players"
-  const LIVE_ENDPOINT = "/api/players";
-  const LIVE_POLL_MS = 5000;
-
-  // Accepts the raw ER:LC v2 response ({ Players: [...] }) or a plain array.
-  const normalizePlayers = raw => {
-    const list = Array.isArray(raw) ? raw : (raw && (raw.Players || raw.players)) || [];
-    return list.map(p => {
-      const [name, id] = String(p.Player || p.name || "").split(":");
-      const L = p.Location || {};
-      return {
-        name, id: id || p.id || "",
-        team: p.Team || p.team || "Civilian",
-        callsign: p.Callsign || p.callsign || "",
-        permission: p.Permission || p.permission || "Normal",
-        x: L.LocationX ?? p.x, z: L.LocationZ ?? p.z,
-        street: L.StreetName || p.street || "", postal: L.PostalCode || p.postal || ""
-      };
-    }).filter(p => p.name);
-  };
-
-  // ---------- Bans data ----------
-  // Your backend route that returns the ER:LC ban list. ER:LC's endpoint is GET https://api.erlc.gg/v1/server/bans
-  // (server-key header) and answers with { "<userId>": "<username>", ... }. Leave "" until it exists.
-  const BANS_ENDPOINT = "/api/bans";
-  const BANS = [];            // { name, id }
-  let bansCheckedAt = Date.now();
-  const normalizeBans = raw => Array.isArray(raw)
-    ? raw.map(b => ({ name: String(b.name || b.Name || ""), id: String(b.id || b.Id || "") })).filter(b => b.name || b.id)
-    : Object.entries(raw || {}).map(([id, name]) => ({ id, name: String(name) }));
-
-  const LOG_ICON = { command: "commands", join: "login", leave: "logout", kill: "target", modcall: "phone" };
-  const logText = (l, mono) => {
-    const u = `<b>${esc(l.user)}</b>`;
-    switch (l.type) {
-      case "command": return `${u} <span class="${mono ? "mono" : ""}">ran ${esc(l.cmd)}</span>`;
-      case "join":    return `${u} joined the server`;
-      case "leave":   return `${u} left the server`;
-      case "kill":    return `${u} killed <b>${esc(l.target || "someone")}</b>`;
-      case "modcall": return `${u} called a moderator${l.text ? " \u00B7 " + esc(l.text) : ""}`;
-      default:        return `${u} ${esc(l.text || "")}`;
-    }
-  };
-  const logRow = (l, mono) => `<div class="row"><span class="row-icon ${l.type}">${ico(LOG_ICON[l.type] || "pulse")}</span><span class="row-text">${logText(l, mono)}</span><span class="row-time">${esc(timeAgo(l.at))}</span></div>`;
-
-  // ---------- Commands data ----------
-  // Your backend route. The panel POSTs { "command": ":h Hello" } and expects { "ok": true } or { "ok": false, "error": "..." }.
-  // The backend forwards it to ER:LC (POST https://api.erlc.gg/v2/server/command, server-key header).
-  const COMMAND_ENDPOINT = "/api/commands";
-  const COMMAND_COOLDOWN_MS = 5000;   // ER:LC allows one command every 5 seconds
-  // ER:LC refuses commands that give out admin/mod powers or shut the server down. The backend must block these too.
-  const BLOCKED_COMMANDS = [":admin", ":unadmin", ":mod", ":unmod", ":helper", ":unhelper", ":shutdown"];
-  const QUICK_COMMANDS = [
-    { title: "Server message", fill: ":m",     hint: ":m" },
-    { title: "Hint",           fill: ":h",     hint: ":h" },
-    { title: "Private message",fill: ":pm",    hint: ":pm username" },
-    { title: "Kick",           fill: ":kick",  hint: ":kick username reason" },
-    { title: "Ban",            fill: ":ban",   hint: ":ban username" },
-    { title: "Unban",          fill: ":unban", hint: ":unban username" },
-    { title: "Priority timer", fill: ":prty",  hint: ":prty 120" },
-    { title: "Peace timer",    fill: ":pt",    hint: ":pt 120" }
-  ];
-  // newest first: { command, ok, error, user, at }
-  const COMMAND_HISTORY = [];
-
-  // ---------- Staff data ----------
-  // Later this list comes from your Discord role check. rank must be one of RANK_ORDER.
-  const RANK_ORDER  = ["Helper", "Mod", "Admin", "Owner"];   // lowest to highest
-  const LADDER      = ["Helper", "Mod", "Admin"];            // must match LADDER in backend.py
-  const RANK_COLORS = { Owner: "#f5a623", Admin: "#a855f7", Mod: "#22c55e", Helper: "#22b8cf" };
-  const MAX_STRIKES = 3;
-  // { id, name, handle, avatar, rank, strikes, since, canManage }  (from /api/state)
-  const STAFF = [];
-  const fmtDur = sec => sec < 60 ? Math.floor(sec) + "s" : sec < 3600 ? Math.floor(sec / 60) + "m" : Math.floor(sec / 3600) + "h " + Math.floor((sec % 3600) / 60) + "m";
-
-  // ---------- Shifts data ----------
-  // Finished shifts, newest first: { user, avatar, started, ended, breakMs, revoked, logs }  (times are ms timestamps)
-  // Time on break (breakMs) doesn't count, and a revoked shift counts as 0s. Your backend should own start/stop times.
-  const SHIFTS = [];
-  const setShifts = s => { ACTIVE_SHIFTS.splice(0, ACTIVE_SHIFTS.length, ...s.active); SHIFTS.splice(0, SHIFTS.length, ...s.finished); };
-  const activeSeconds = a => Math.max(0, ((Date.now() - a.started) - a.breakMs - (a.onBreak ? Date.now() - a.breakStartedAt : 0)) / 1000);
-  const doneSeconds = sh => sh.revoked ? 0 : Math.max(0, (sh.ended - sh.started - sh.breakMs) / 1000);
-  const isOnShift = name => ACTIVE_SHIFTS.some(a => a.name === name);
-  const weekSecondsFor = name => {
-    const since = Date.now() - 7 * 864e5;
-    return SHIFTS.filter(x => x.user === name && x.ended >= since).reduce((t, x) => t + doneSeconds(x), 0)
-         + ACTIVE_SHIFTS.filter(a => a.name === name).reduce((t, a) => t + activeSeconds(a), 0);
-  };
-  const fmtClock = sec => { const t = Math.floor(sec), z = n => String(n).padStart(2, "0"); return `${Math.floor(t / 3600)}:${z(Math.floor(t % 3600 / 60))}:${z(t % 60)}`; };
-  const fmtDateTime = ms => new Date(ms).toLocaleString("en-US", { month: "2-digit", day: "2-digit", year: "numeric", hour: "numeric", minute: "2-digit" }).replace(", ", " ");
-
-  const greeting = () => {
-    const h = new Date().getHours();
-    return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-  };
-
-  const panel = (title, icon, link, body, cls = "") => `
-    <section class="panel ${cls}">
-      <div class="panel-head">
-        <span class="t">${ico(icon)}${title}</span>
-        ${link ? `<a href="${link.href}">${link.text}</a>` : ""}
-      </div>
-      <div class="panel-body">${body}</div>
-    </section>`;
-
-  const empty = (icon, text) => `<div class="empty">${ico(icon)}<span>${text}</span></div>`;
-
-  const HEADINGS = {
-    shifts: () => ({ title: "Shifts", sub: "Clock in while you moderate. Time on break doesn't count." }),
-    staff: () => ({ title: "Staff", sub: `${STAFF.length} on the staff team \u00B7 ${STAFF.filter(m => isOnShift(m.name)).length} on shift` }),
-    commands: () => ({ title: "Commands", sub: "Run in-game commands on your ER:LC server. ER:LC takes one command every 5 seconds." }),
-    serverlogs: () => ({
-      title: "Server logs",
-      sub: `Everything that happens on your ER:LC server, kept for ${LOG_RETENTION_DAYS} days (commands for ${COMMAND_RETENTION_DAYS}).`,
-      tools: `<label class="search">${ico("search")}<input id="logSearch" type="search" placeholder="Search a player or command" autocomplete="off" aria-label="Search logs"></label>`
-    }),
-    bans: () => ({
-      title: "Bans",
-      sub: `${BANS.length} banned on the ER:LC server \u00B7 checked ${timeAgo(bansCheckedAt)}`,
-      tools: `<div class="tools-row">
-        <label class="search">${ico("search")}<input id="banSearch" type="search" placeholder="Name or user ID" autocomplete="off" aria-label="Search bans"></label>
-        <button class="btn-ghost btn-sm" id="banRefresh" type="button">${ico("refresh")}Refresh</button>
-        <button class="btn-danger" id="banAdd" type="button">${ico("bans")}Ban someone</button>
-      </div>`
-    }),
-    livemap: () => ({ title: "Live map", sub: "", flush: true }),
-    moderations: () => ({
-      title: "Moderations",
-      sub: "Warnings, kicks, bans, ban BOLOs and notes logged by your staff team.",
-      tools: `<button class="btn-primary" id="newLog" type="button">${ico("plus")}New log</button>`
-    }),
-    overview: () => ({ title: `${greeting()}, ${esc(USERNAME)}`, sub: esc(SERVER_NAME) }),
-    players:  () => ({
-      title: "Players",
-      sub: `${PLAYERS.length} of ${MAX_PLAYERS} in game`,
-      tools: `<label class="search">${ico("search")}<input id="playerSearch" type="search" placeholder="Search name or callsign" autocomplete="off" aria-label="Search players"></label>`
-    })
-  };
-
-  // Runs after a page renders (wire up events here)
-  const AFTER = {
-    shifts: () => {
-      let range = 7;
-      const $ = id => document.getElementById(id);
-      const mine = () => ACTIVE_SHIFTS.find(a => a.name === USERNAME);
-      const avatarOf = name => (STAFF.find(m => m.name === name) || {}).avatar || "";
-
-      const tickTimers = () => {
-        const a = mine(); const t = $("myTimer"); if (a && t) t.textContent = fmtClock(activeSeconds(a));
-        document.querySelectorAll("#shNow .tmr").forEach(el => {
-          const x = ACTIVE_SHIFTS.find(v => v.name === el.dataset.n); if (x) el.textContent = fmtClock(activeSeconds(x));
-        });
-      };
-      const drawMine = () => {
-        const a = mine();
-        $("shMine").innerHTML = !a
-          ? `<div class="shift-status"><i class="sdot"></i>Off shift</div><button class="btn-green" id="shStart" type="button">${ico("play")}Start shift</button>`
-          : `<div class="shift-status"><i class="sdot ${a.onBreak ? "brk" : "on"}"></i>${a.onBreak ? "On break" : "On shift"}</div>
-             <div class="shift-time" id="myTimer">0:00:00</div>
-             <div class="shift-actions">
-               ${a.onBreak ? `<button class="btn-green" id="shBreak" type="button">End break</button>` : `<button class="btn-ghost btn-sm" id="shBreak" type="button">Start break</button>`}
-               <button class="btn-danger" id="shEnd" type="button">End shift</button>
-             </div>`;
-        tickTimers();
-      };
-      const drawNow = () => {
-        $("shNow").innerHTML = ACTIVE_SHIFTS.length
-          ? `<div style="padding:8px">${ACTIVE_SHIFTS.map(a => `<div class="now-row">${avatarHtml(a.name, a.avatar, "lg")}<span class="nm">${esc(a.name)}${a.onBreak ? '<span class="tag">on break</span>' : ""}</span><span class="tmr" data-n="${esc(a.name)}"></span></div>`).join("")}</div>`
-          : `<div class="empty" style="min-height:120px"><span>Nobody is on shift</span></div>`;
-        tickTimers();
-      };
-      const drawBoard = () => {
-        document.querySelectorAll("#lbTabs button").forEach(b => b.classList.toggle("active", +b.dataset.r === range));
-        const since = Date.now() - range * 864e5, map = new Map();
-        const get = (u, av) => { if (!map.has(u)) map.set(u, { user: u, avatar: av, secs: 0, shifts: 0 }); return map.get(u); };
-        SHIFTS.filter(x => x.ended >= since).forEach(x => { const e = get(x.user, x.avatar); e.secs += doneSeconds(x); if (!x.revoked) e.shifts++; });
-        ACTIVE_SHIFTS.forEach(a => { const e = get(a.name, a.avatar); e.secs += activeSeconds(a); e.shifts++; });
-        const rows = [...map.values()].sort((a, b) => b.secs - a.secs || b.shifts - a.shifts || a.user.localeCompare(b.user));
-        const max = Math.max(1, ...rows.map(r => r.secs));
-        $("lbList").innerHTML = rows.length ? rows.map((r, i) => {
-          const logs = MODERATIONS.filter(m => m.mod === r.user && m.at >= since).length;
-          return `<div class="lb-row ${r.user === USERNAME ? "me" : ""}">
-            <span class="lb-rank">${i === 0 ? ico("crown") : i + 1}</span>
-            ${avatarHtml(r.user, r.avatar || avatarOf(r.user), "lg")}
-            <div class="lb-main"><b>${esc(r.user)}</b><div class="lb-bar"><i style="width:max(${(r.secs / max * 100).toFixed(1)}%,12px)"></i></div>
-              <div class="lb-meta">${r.shifts} ${r.shifts === 1 ? "shift" : "shifts"} \u00B7 ${logs} ${logs === 1 ? "log" : "logs"}</div></div>
-            <span class="lb-time">${fmtDur(r.secs)}</span>
-          </div>`;}).join("") : `<div class="empty" style="min-height:200px"><span>No shifts in this period</span></div>`;
-      };
-      const drawRecent = () => {
-        const rows = SHIFTS.filter(x => x.user === USERNAME).slice(0, 10);
-        $("shRecent").innerHTML = `<table class="players"><thead><tr><th>Started</th><th>Ended</th><th>Time</th><th class="r">Logs</th></tr></thead><tbody>${
-          rows.length ? rows.map(x => `<tr>
-            <td style="white-space:nowrap">${x.revoked ? `<span class="struck">${esc(fmtDateTime(x.started))}</span><span class="revoked">Revoked</span>` : esc(fmtDateTime(x.started))}</td>
-            <td style="white-space:nowrap">${esc(fmtDateTime(x.ended))}</td>
-            <td class="mono-m">${fmtDur(doneSeconds(x))}</td>
-            <td class="r">${x.logs}</td></tr>`).join("") : `<tr><td colspan="4"><div class="no-results">No shifts yet</div></td></tr>`}</tbody></table>`;
-      };
-      const drawAll = () => { drawMine(); drawNow(); drawBoard(); drawRecent(); };
-
-      $("shMine").addEventListener("click", async e => {
-        const b = e.target.closest("button"); if (!b) return;
-        const action = { shStart: "start", shBreak: "break", shEnd: "end" }[b.id]; if (!action) return;
-        b.disabled = true;
-        try { setShifts(await api("/api/shifts/" + action, {})); } catch (err) { alert(err.message); }
-        drawAll();
-      });
-      $("lbTabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { range = +b.dataset.r; drawBoard(); } });
-
-      drawAll();
-      const t1 = setInterval(tickTimers, 1000);
-      const t2 = setInterval(drawBoard, 5000);
-      return () => { clearInterval(t1); clearInterval(t2); };
-    },
-    staff: () => {
-      let tab = "team", filter = "everyone", query = "", menuEl = null, menuOpener = null;
-      const tabs = document.getElementById("staffTabs"), body = document.getElementById("staffBody"), sub = document.getElementById("sub");
-      const weekLogs = m => MODERATIONS.filter(x => x.mod === m.name && Date.now() - x.at < 7 * 864e5).length;
-
-      const closeMenu = (refocus = false) => {
-        if (menuEl) { menuEl.remove(); menuEl = null; }
-        if (refocus && menuOpener && menuOpener.isConnected) menuOpener.focus();
-        menuOpener = null;
-      };
-
-      const drawTabs = () => {
-        tabs.innerHTML = `
-          <button role="tab" aria-selected="${tab === "team"}" class="${tab === "team" ? "active" : ""}" data-t="team">${ico("players")}Team <span class="n">${STAFF.length}</span></button>`;
-        sub.textContent = `${STAFF.length} on the staff team \u00B7 ${STAFF.filter(m => isOnShift(m.name)).length} on shift`;
-      };
-
-      const drawShell = () => {
-        closeMenu();
-        drawTabs();
-        body.innerHTML = `
-          <div class="filter-row">
-            <div class="pills" id="staffPills" style="margin:0"></div>
-            <span class="spacer"></span>
-            <label class="search">${ico("search")}<input id="staffSearch" type="search" placeholder="Search staff" autocomplete="off" aria-label="Search staff" value="${esc(query)}"></label>
-          </div>
-          <div id="staffTable"></div>`;
-        document.getElementById("staffSearch").addEventListener("input", e => { query = e.target.value; drawTeam(); });
-        drawTeam();
-      };
-
-      const drawTeam = () => {
-        const present = [...RANK_ORDER].reverse().filter(r => STAFF.some(m => m.rank === r));
-        if (filter !== "everyone" && !present.includes(filter)) filter = "everyone";
-        document.getElementById("staffPills").innerHTML =
-          `<button class="pill ${filter === "everyone" ? "active" : ""}" data-f="everyone">Everyone <span class="n">${STAFF.length}</span></button>` +
-          present.map(r => `<button class="pill ${filter === r ? "active" : ""}" data-f="${r}" style="--dot:${RANK_COLORS[r] || "#6b6e75"}"><span class="dot"></span>${r} <span class="n">${STAFF.filter(m => m.rank === r).length}</span></button>`).join("");
-
-        const q = query.trim().toLowerCase();
-        const rows = STAFF.filter(m => (filter === "everyone" || m.rank === filter) && (!q || m.name.toLowerCase().includes(q) || (m.handle || "").toLowerCase().includes(q)));
-        document.getElementById("staffTable").innerHTML = rows.length ? `<div class="table-wrap"><table class="players">
-          <thead><tr><th>Staff member</th><th>Rank</th><th>Strikes</th><th>Status</th><th>This week</th><th>Since</th><th></th></tr></thead>
-          <tbody>${rows.map(m => {
-            const you = m.id === USER_ID, logs = weekLogs(m);
-            return `<tr>
-              <td><div class="pl">${avatarHtml(m.name, m.avatar, "lg")}<div class="who"><div><b>${esc(m.name)}</b>${you ? '<span class="you">you</span>' : ""}</div><small>@${esc(m.handle || "")}</small></div></div></td>
-              <td><span class="rankbadge" style="--c:${RANK_COLORS[m.rank] || "#6b6e75"}">${esc(m.rank)}</span></td>
-              <td><span class="strikes" role="img" aria-label="${m.strikes} of ${MAX_STRIKES} strikes">${Array.from({ length: MAX_STRIKES }, (_, i) => `<i class="${i < m.strikes ? "on" : ""}"></i>`).join("")}</span></td>
-              <td>${isOnShift(m.name) ? '<span class="onshift">On shift</span>' : "Off shift"}</td>
-              <td class="wk"><b>${fmtDur(weekSecondsFor(m.name))}</b> \u00B7 ${logs} ${logs === 1 ? "log" : "logs"}</td>
-              <td style="white-space:nowrap">${esc(timeAgo(m.since))}</td>
-              <td class="r">${!m.canManage ? "" : `<button class="dots-btn" type="button" data-id="${esc(m.id)}" aria-label="Actions for ${esc(m.name)}" aria-haspopup="menu">${ico("more")}</button>`}</td>
-            </tr>`;}).join("")}</tbody></table></div>`
-          : `<div class="empty-card">${ico("players")}<b>No staff match</b></div>`;
-        drawTabs();
-      };
-
-      // row menu: the backend re-checks every action and answers with the fresh staff list
-      const openMenu = btn => {
-        closeMenu();
-        const m = STAFF.find(x => x.id === btn.dataset.id); if (!m) return;
-        const i = LADDER.indexOf(m.rank), mine = RANK_ORDER.indexOf(USER_RANK);
-        const act = (path, body) => async () => {
-          try { STAFF.splice(0, STAFF.length, ...await api(`/api/staff/${m.id}/${path}`, body)); } catch (err) { alert(err.message); }
-          drawTeam();
-        };
-        const items = [
-          { label: "Promote",      off: i < 0 || i >= LADDER.length - 1 || RANK_ORDER.indexOf(LADDER[i + 1]) >= mine, run: act("rank", { direction: "up" }) },
-          { label: "Demote",       off: i <= 0,                           run: act("rank", { direction: "down" }) },
-          { label: "Add strike",   off: m.strikes >= MAX_STRIKES,         run: act("strike", { delta: 1 }) },
-          { label: "Remove strike",off: m.strikes <= 0,                   run: act("strike", { delta: -1 }) }
-        ];
-        menuEl = document.createElement("div");
-        menuEl.className = "menu"; menuEl.setAttribute("role", "menu");
-        menuEl.innerHTML = items.map((it, k) => `<button type="button" role="menuitem" data-k="${k}" ${it.off ? "disabled" : ""}>${it.label}</button>`).join("");
-        document.body.appendChild(menuEl);
-        menuOpener = btn;
-        const r = btn.getBoundingClientRect(), mw = menuEl.offsetWidth, mh = menuEl.offsetHeight;
-        menuEl.style.left = Math.max(8, Math.min(window.innerWidth - mw - 8, r.right - mw)) + "px";
-        menuEl.style.top = (r.bottom + mh + 8 > window.innerHeight ? Math.max(8, r.top - mh - 4) : r.bottom + 4) + "px";
-        menuEl.addEventListener("click", e => {
-          const b = e.target.closest("button"); if (!b || b.disabled) return;
-          closeMenu();
-          items[+b.dataset.k].run();
-        });
-        const first = menuEl.querySelector("button:not(:disabled)"); if (first) first.focus();
-      };
-
-      tabs.addEventListener("click", e => { const b = e.target.closest("button"); if (b && b.dataset.t !== tab) { tab = b.dataset.t; drawShell(); } });
-      body.addEventListener("click", e => {
-        const pill = e.target.closest(".pill"); if (pill) { filter = pill.dataset.f; drawTeam(); return; }
-        const dots = e.target.closest(".dots-btn"); if (dots) { if (menuOpener === dots) closeMenu(); else openMenu(dots); }
-      });
-      const onDoc = e => { if (menuEl && !menuEl.contains(e.target) && !e.target.closest(".dots-btn")) closeMenu(); };
-      const onKey = e => { if (e.key === "Escape" && menuEl) closeMenu(true); };
-      const onScroll = () => closeMenu();
-      document.addEventListener("mousedown", onDoc);
-      document.addEventListener("keydown", onKey);
-      window.addEventListener("resize", onScroll);
-      document.querySelector(".content").addEventListener("scroll", onScroll);
-
-      drawShell();
-      return () => {
-        closeMenu();
-        document.removeEventListener("mousedown", onDoc);
-        document.removeEventListener("keydown", onKey);
-        window.removeEventListener("resize", onScroll);
-        document.querySelector(".content").removeEventListener("scroll", onScroll);
-      };
-    },
-    commands: () => {
-      const input = document.getElementById("cmdInput"), runBtn = document.getElementById("cmdRun"), hist = document.getElementById("cmdHist");
-      let busy = false, until = 0;
-
-      const setBtn = () => {
-        const left = Math.ceil((until - Date.now()) / 1000);
-        const label = busy ? "Running\u2026" : left > 0 ? `Wait ${left}s` : "Run";
-        runBtn.disabled = busy || left > 0;
-        runBtn.innerHTML = `${ico("send")}${label}`;
-      };
-      const drawHistory = () => {
-        hist.innerHTML = COMMAND_HISTORY.length ? COMMAND_HISTORY.slice(0, 20).map(h => `
-          <div class="hrow ${h.ok ? "ok" : "fail"}">
-            ${ico(h.ok ? "checkcircle" : "xcircle")}
-            <span class="hcmd" title="${esc(h.command)}">${esc(h.command)}</span>
-            ${h.ok ? "" : `<span class="herr" title="${esc(h.error)}">${esc(h.error)}</span>`}
-            <span class="hmeta">${esc(h.user)} \u00B7 ${esc(timeAgo(h.at))}</span>
-          </div>`).join("") : empty("commands", "No commands run yet");
-      };
-
-      const run = async () => {
-        let cmd = input.value.trim();
-        if (!cmd || busy || Date.now() < until) return;
-        if (!cmd.startsWith(":")) cmd = ":" + cmd;
-        const name = cmd.split(/\s+/)[0].toLowerCase();
-        let ok = false, error = "", sent = false;
-
-        if (BLOCKED_COMMANDS.includes(name)) {
-          error = "That command can only be run in game.";
-        } else if (!COMMAND_ENDPOINT) {
-          error = "Not connected to the server yet.";
-        } else {
-          busy = true; sent = true; setBtn();
-          try {
-            const d = await api(COMMAND_ENDPOINT, { command: cmd });
-            ok = d.ok !== false;
-            if (!ok) error = d.error;
-          } catch (err) { error = err.message; }
-          busy = false;
-        }
-
-        const now = Date.now();
-        // the backend records sent commands; commands blocked here only show locally
-        let synced = false;
-        if (sent) try { COMMAND_HISTORY.splice(0, COMMAND_HISTORY.length, ...await api(COMMAND_ENDPOINT)); synced = true; } catch (err) {}
-        if (!synced) COMMAND_HISTORY.unshift({ command: cmd, ok, error, user: USERNAME, at: now });
-        if (ok) input.value = "";
-        if (sent) until = now + COMMAND_COOLDOWN_MS;
-        drawHistory(); setBtn();
-      };
-
-      runBtn.addEventListener("click", run);
-      input.addEventListener("keydown", e => { if (e.key === "Enter") run(); });
-      document.querySelector(".quick").addEventListener("click", e => {
-        const t = e.target.closest(".tile"); if (!t) return;
-        input.value = QUICK_COMMANDS[+t.dataset.i].fill + " ";
-        input.focus();
-      });
-
-      drawHistory(); setBtn();
-      const tick = setInterval(() => { setBtn(); drawHistory(); }, 1000);
-      return () => clearInterval(tick);
-    },
-    serverlogs: () => {
-      const FILTERS = [
-        { id: "all",     label: "Everything", dot: null },
-        { id: "join",    label: "Joins",      dot: "#3ddc97" },
-        { id: "leave",   label: "Leaves",     dot: "#8b8f98" },
-        { id: "kill",    label: "Kills",      dot: "#ef4444" },
-        { id: "command", label: "Commands",   dot: "#d4d4d4" },
-        { id: "modcall", label: "Mod calls",  dot: "#f5a623" }
-      ];
-      let filter = "all", query = "", shown = 100, alive = true;
-      const pills = document.getElementById("logPills"), list = document.getElementById("logList"), more = document.getElementById("logMore");
-
-      const draw = () => {
-        const q = query.trim().toLowerCase();
-        const rows = SERVER_LOGS.filter(l =>
-          Date.now() - l.at <= (l.type === "command" ? COMMAND_RETENTION_DAYS : LOG_RETENTION_DAYS) * 864e5 &&
-          (filter === "all" || l.type === filter) &&
-          (!q || [l.user, l.cmd, l.target, l.text].join(" ").toLowerCase().includes(q)));
-
-        pills.innerHTML = FILTERS.map(f => `<button class="pill ${f.id === filter ? "active" : ""}" data-f="${f.id}" ${f.dot ? `style="--dot:${f.dot}"` : ""}>${f.dot ? '<span class="dot"></span>' : ""}${f.label}</button>`).join("");
-        list.innerHTML = rows.length ? rows.slice(0, shown).map(l => logRow(l, true)).join("") : empty("pulse", SERVER_LOGS.length ? "No logs match" : "No logs yet");
-        more.hidden = rows.length <= shown;
-        more.innerHTML = rows.length > shown ? `<button class="btn-ghost" id="logMoreBtn" type="button">Load more</button>` : "";
-      };
-
-      pills.addEventListener("click", e => { const b = e.target.closest(".pill"); if (b) { filter = b.dataset.f; shown = 100; draw(); } });
-      more.addEventListener("click", e => { if (e.target.closest("#logMoreBtn")) { shown += 100; draw(); } });
-      document.getElementById("logSearch").addEventListener("input", e => { query = e.target.value; shown = 100; draw(); });
-
-      const poll = async () => {
-        if (!LOGS_ENDPOINT) return;
-        try {
-          const r = await fetch(LOGS_ENDPOINT, { cache: "no-store" });
-          if (!r.ok) throw new Error("HTTP " + r.status);
-          const data = await r.json();
-          SERVER_LOGS.splice(0, SERVER_LOGS.length, ...(Array.isArray(data) ? data : []).sort((a, b) => b.at - a.at));
-          if (alive) draw();
-        } catch (err) { /* keep showing what we have */ }
-      };
-      draw();
-      poll();
-      const pollTimer = setInterval(poll, LOGS_POLL_MS);
-      const tick = setInterval(draw, 30000);   // keeps "5m ago" fresh
-      return () => { alive = false; clearInterval(pollTimer); clearInterval(tick); };
-    },
-    bans: () => {
-      let query = "";
-      const list = document.getElementById("banList");
-      const sub = document.getElementById("sub");
-
-      const draw = () => {
-        sub.textContent = `${BANS.length} banned on the ER:LC server \u00B7 checked ${timeAgo(bansCheckedAt)}`;
-        const q = query.trim().toLowerCase();
-        const rows = BANS.filter(b => !q || b.name.toLowerCase().includes(q) || b.id.includes(q));
-        if (!BANS.length) {
-          list.innerHTML = `<div class="empty-card">${ico("bans")}<b>Nobody is banned</b></div>`;
-        } else if (!rows.length) {
-          list.innerHTML = `<div class="empty-card">${ico("bans")}<b>No matching bans</b></div>`;
-        } else {
-          list.innerHTML = `<div class="table-wrap"><table class="players">
-            <thead><tr><th>Player</th><th>User ID</th></tr></thead>
-            <tbody>${rows.map(b => `<tr>
-              <td><div class="pl"><span class="avatar">${esc((b.name || "?").slice(0, 2).toUpperCase())}</span><span class="pname">${esc(b.name || "Unknown")}</span></div></td>
-              <td class="case">${esc(b.id || "\u2013")}</td>
-            </tr>`).join("")}</tbody></table></div>`;
-        }
-      };
-
-      const refresh = async () => {
-        const btn = document.getElementById("banRefresh");
-        btn.disabled = true;
-        try {
-          BANS.splice(0, BANS.length, ...normalizeBans(await api(BANS_ENDPOINT)));
-          bansCheckedAt = Date.now();
-        } catch (err) {
-          sub.textContent = "Couldn't refresh the ban list";
-          btn.disabled = false;
-          return;
-        }
-        btn.disabled = false;
-        draw();
-      };
-
-      document.getElementById("banSearch").addEventListener("input", e => { query = e.target.value; draw(); });
-      document.getElementById("banRefresh").addEventListener("click", refresh);
-      // "Ban someone" opens the moderation log dialog with Ban preselected, so every ban is also logged
-      document.getElementById("banAdd").addEventListener("click", () => openLogModal(entry => {
-        if (entry.type === "ban") BANS.unshift({ name: entry.user, id: "" });
-        draw();
-      }, "ban"));
-      draw();
-      refresh();
-      const tick = setInterval(draw, 30000);   // keeps "checked just now" fresh
-      return () => clearInterval(tick);
-    },
-    livemap: () => {
-      const $ = id => document.getElementById(id);
-      const map = $("lmMap"), stage = $("lmStage"), img = $("lmImg"), layer = $("lmLayer");
-      let players = [], filter = "all", query = "", selected = null, failed = false, alive = true;
-      let iw = 0, ih = 0, fit = 1, view = { s: 1, tx: 0, ty: 0 };
-
-      const toPx = p => {
-        const b = MAP_BOUNDS;
-        const fz = (p.z - b.zMin) / (b.zMax - b.zMin);
-        return { x: (p.x - b.xMin) / (b.xMax - b.xMin) * iw, y: (FLIP_Z ? 1 - fz : fz) * ih };
-      };
-      const apply = () => {
-        stage.style.transform = `translate(${view.tx}px,${view.ty}px) scale(${view.s})`;
-        stage.style.setProperty("--inv", String(1 / view.s));
-        map.style.backgroundPosition = `${view.tx}px ${view.ty}px`;
-      };
-      const fitView = () => {
-        const r = map.getBoundingClientRect();
-        if (!iw || !r.width) return;
-        fit = Math.min(r.width / iw, r.height / ih) * 0.96;
-        view = { s: fit, tx: (r.width - iw * fit) / 2, ty: (r.height - ih * fit) / 2 };
-        apply();
-      };
-      const zoomAt = (f, cx, cy) => {
-        const ns = Math.min(fit * 12, Math.max(fit * 0.6, view.s * f));
-        const k = ns / view.s;
-        view.tx = cx - (cx - view.tx) * k; view.ty = cy - (cy - view.ty) * k; view.s = ns;
-        apply();
-      };
-      const zoomCenter = f => { const r = map.getBoundingClientRect(); zoomAt(f, r.width / 2, r.height / 2); };
-      const centerOn = p => {
-        const r = map.getBoundingClientRect(), pt = toPx(p);
-        view.s = Math.max(view.s, fit * 3);
-        view.tx = r.width / 2 - pt.x * view.s; view.ty = r.height / 2 - pt.y * view.s;
-        apply();
-      };
-
-      const visible = () => {
-        const q = query.trim().toLowerCase();
-        return players.filter(p => (filter === "all" || p.team === filter) &&
-          (!q || p.name.toLowerCase().includes(q) || (p.callsign || "").toLowerCase().includes(q)));
-      };
-      const color = t => TEAM_COLORS[t] || "#6b6e75";
-      const where = p => [p.postal ? "Postal " + p.postal : "", p.street].filter(Boolean).join(" \u00B7 ");
-
-      const draw = () => {
-        const teams = [...new Set(players.map(p => p.team))];
-        if (filter !== "all" && !teams.includes(filter)) filter = "all";
-        $("lmSub").textContent = failed ? "Can't reach the server \u00B7 retrying"
-          : `${players.length} ${players.length === 1 ? "player" : "players"} \u00B7 updates every few seconds`;
-        $("lmPills").innerHTML =
-          `<button class="pill ${filter === "all" ? "active" : ""}" data-f="all">All <span class="n">${players.length}</span></button>` +
-          teams.map(t => `<button class="pill ${filter === t ? "active" : ""}" data-f="${esc(t)}" style="--dot:${color(t)}"><span class="dot"></span>${esc(t)} <span class="n">${players.filter(p => p.team === t).length}</span></button>`).join("");
-
-        const vis = visible();
-        $("lmList").innerHTML = vis.map(p => `
-          <button class="lm-row ${p.name === selected ? "sel" : ""}" data-n="${esc(p.name)}" style="--c:${color(p.team)}">
-            <i></i><b>${esc(p.name)}</b><span>${esc(p.callsign || (p.postal ? "P" + p.postal : ""))}</span>
-          </button>`).join("");
-
-        layer.innerHTML = iw ? vis.filter(p => Number.isFinite(p.x) && Number.isFinite(p.z)).map(p => {
-          const pt = toPx(p);
-          return `<button class="lm-pin ${p.name === selected ? "sel" : ""}" data-n="${esc(p.name)}" aria-label="${esc(p.name)}" style="left:${pt.x}px;top:${pt.y}px;--c:${color(p.team)}">
-            <span class="lm-tip"><b>${esc(p.name)}</b><span>${esc(p.team)}${p.callsign ? " \u00B7 " + esc(p.callsign) : ""}</span>${where(p) ? `<span>${esc(where(p))}</span>` : ""}</span>
-          </button>`;
-        }).join("") : "";
-        drawCard();
-      };
-
-      // details card for the selected player
-      const card = $("lmCard");
-      let cardHtml = "";
-      const drawCard = () => {
-        const p = selected && players.find(x => x.name === selected);
-        const html = !p ? "" : `
-          <button class="lm-btn lm-card-x" type="button" data-close aria-label="Close">${ico("close")}</button>
-          <div class="lm-card-av">${/^\d+$/.test(p.id) ? `<img src="/api/roblox/avatar/${p.id}" alt="${esc(p.name)}'s Roblox avatar" onerror="this.remove()">` : ""}</div>
-          <div class="lm-card-body">
-            <h3>${esc(p.name)}</h3>
-            <dl>
-              <dt>Team</dt><dd><i></i>${esc(p.team)}</dd>
-              ${p.callsign ? `<dt>Callsign</dt><dd>${esc(p.callsign)}</dd>` : ""}
-              <dt>Permission</dt><dd>${esc(p.permission)}</dd>
-              ${where(p) ? `<dt>Location</dt><dd>${esc(where(p))}</dd>` : ""}
-              ${p.id ? `<dt>User ID</dt><dd class="mono">${esc(p.id)}</dd>` : ""}
-            </dl>
-            ${/^\d+$/.test(p.id) ? `<a href="https://www.roblox.com/users/${p.id}/profile" target="_blank" rel="noopener noreferrer">Roblox profile</a>` : ""}
-          </div>`;
-        if (html === cardHtml) return;   // don't rebuild (and reload the avatar) when nothing changed
-        cardHtml = html;
-        card.innerHTML = html;
-        card.hidden = !p;
-        if (p) card.style.setProperty("--c", color(p.team));
-      };
-      card.addEventListener("click", e => { if (e.target.closest("[data-close]")) { selected = null; draw(); } });
-
-      const onLoad = () => {
-        iw = img.naturalWidth; ih = img.naturalHeight;
-        stage.style.width = iw + "px"; stage.style.height = ih + "px";
-        fitView(); draw();
-      };
-      img.addEventListener("load", onLoad);
-      const fallbacks = [...MAP_FALLBACKS];
-      img.addEventListener("error", () => {
-        if (fallbacks.length) { img.src = fallbacks.shift(); return; }
-        const n = $("lmNote"); n.hidden = false;
-        n.textContent = "Couldn't load the map image. Download it and set MAP_URL to your own copy.";
-      });
-      if (img.complete && img.naturalWidth) onLoad();
-
-      // select from list or pin
-      $("lmList").addEventListener("click", e => {
-        const b = e.target.closest(".lm-row"); if (!b) return;
-        selected = b.dataset.n;
-        const p = players.find(x => x.name === selected);
-        if (p && Number.isFinite(p.x)) centerOn(p);
-        draw();
-      });
-      layer.addEventListener("click", e => {
-        const b = e.target.closest(".lm-pin"); if (!b) return;
-        selected = b.dataset.n; draw();
-      });
-      $("lmPills").addEventListener("click", e => {
-        const b = e.target.closest(".pill"); if (b) { filter = b.dataset.f; draw(); }
-      });
-      $("lmSearch").addEventListener("input", e => { query = e.target.value; draw(); });
-
-      // pan + zoom
-      let drag = null, dragMoved = false;
-      map.addEventListener("pointerdown", e => {
-        if (e.target.closest(".lm-ctrl,.lm-card")) return;
-        drag = { x: e.clientX, y: e.clientY, tx: view.tx, ty: view.ty, id: e.pointerId };
-        dragMoved = false;
-      });
-      map.addEventListener("pointermove", e => {
-        if (drag) {
-          const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-          if (!dragMoved && Math.hypot(dx, dy) > 4) { dragMoved = true; map.setPointerCapture(drag.id); map.classList.add("grabbing"); }
-          if (dragMoved) { view.tx = drag.tx + dx; view.ty = drag.ty + dy; apply(); }
-        }
-        if (SHOW_COORDS && iw) {
-          const r = map.getBoundingClientRect(), b = MAP_BOUNDS;
-          const fx = (e.clientX - r.left - view.tx) / view.s / iw;
-          let fz = (e.clientY - r.top - view.ty) / view.s / ih; if (FLIP_Z) fz = 1 - fz;
-          const c = $("lmCoords"); c.hidden = false;
-          c.textContent = `X ${Math.round(b.xMin + fx * (b.xMax - b.xMin))} \u00B7 Z ${Math.round(b.zMin + fz * (b.zMax - b.zMin))}`;
-        }
-      });
-      const endDrag = () => { drag = null; map.classList.remove("grabbing"); };
-      map.addEventListener("pointerup", endDrag);
-      map.addEventListener("pointercancel", endDrag);
-      map.addEventListener("click", e => {
-        if (dragMoved || e.target.closest(".lm-pin,.lm-ctrl,.lm-card")) return;
-        if (selected) { selected = null; draw(); }
-      });
-      map.addEventListener("wheel", e => {
-        e.preventDefault();
-        const r = map.getBoundingClientRect();
-        zoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX - r.left, e.clientY - r.top);
-      }, { passive: false });
-
-      // buttons
-      $("lmGrid").onclick = e => { const off = map.classList.toggle("nogrid"); e.currentTarget.setAttribute("aria-pressed", String(!off)); };
-      $("lmReset").onclick = fitView;
-      $("lmIn").onclick = () => zoomCenter(1.4);
-      $("lmOut").onclick = () => zoomCenter(1 / 1.4);
-      $("lmFull").onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else if (map.requestFullscreen) map.requestFullscreen(); };
-      const onFs = () => setTimeout(fitView, 50);
-      document.addEventListener("fullscreenchange", onFs);
-
-      // live data
-      const poll = async () => {
-        try {
-          if (LIVE_ENDPOINT) {
-            const r = await fetch(LIVE_ENDPOINT, { cache: "no-store" });
-            if (!r.ok) throw new Error("HTTP " + r.status);
-            players = normalizePlayers(await r.json());
-          } else {
-            players = PLAYERS.filter(p => Number.isFinite(p.x) && Number.isFinite(p.z));
-          }
-          failed = false;
-        } catch (err) { failed = true; }
-        if (alive) draw();
-      };
-      poll();
-      const timer = setInterval(poll, LIVE_POLL_MS);
-      draw();
-      return () => { alive = false; clearInterval(timer); document.removeEventListener("fullscreenchange", onFs); };
-    },
-    moderations: () => {
-      let filter = "all", onlyMine = false, query = "";
-      const pills = document.getElementById("modPills");
-      const list = document.getElementById("modList");
-
-      const draw = () => {
-        pills.innerHTML = `<button class="pill ${filter === "all" ? "active" : ""}" data-f="all">All</button>` +
-          MOD_TYPES.map(t => `<button class="pill ${filter === t.id ? "active" : ""}" data-f="${t.id}" style="--c:${t.color}"><span class="dot"></span>${t.label}</button>`).join("");
-
-        const q = query.trim().toLowerCase();
-        const rows = MODERATIONS.filter(m =>
-          (filter === "all" || m.type === filter) &&
-          (!onlyMine || m.mod === USERNAME) &&
-          (!q || m.user.toLowerCase().includes(q) || m.reason.toLowerCase().includes(q) || m.id.toLowerCase().includes(q)));
-
-        if (!MODERATIONS.length) {
-          list.innerHTML = `<div class="empty-card">${ico("moderations")}<b>No moderations yet</b><p>Log a warning, kick or ban and it shows here for the whole staff team.</p></div>`;
-        } else if (!rows.length) {
-          list.innerHTML = `<div class="empty-card">${ico("moderations")}<b>No matching moderations</b><p>Try a different filter or search.</p></div>`;
-        } else {
-          list.innerHTML = `<div class="table-wrap"><table class="players">
-            <thead><tr><th>Log</th><th>Player</th><th>Reason</th><th>Moderator</th><th>Status</th><th class="r">When</th></tr></thead>
-            <tbody>${rows.map(m => {
-              const t = typeById(m.type);
-              const link = /^https?:\/\//i.test(m.evidence) ? `<a href="${esc(m.evidence)}" target="_blank" rel="noopener noreferrer">Evidence</a>` : "";
-              return `<tr>
-                <td style="white-space:nowrap"><span class="logbadge" style="--c:${t.color}">${ico(t.icon)}${t.label}</span><span class="logid">${esc(m.id)}</span>${m.duration ? `<span class="logdur">${esc(m.duration)}</span>` : ""}</td>
-                <td><span class="pname">${esc(m.user)}</span></td>
-                <td><div class="reason" title="${esc(m.reason)}">${esc(m.reason)}${link}</div></td>
-                <td><span class="mod">${avatarHtml(m.mod, m.modAvatar)}${esc(m.mod)}</span></td>
-                <td><span class="status">${esc(m.status || "Logged")}</span></td>
-                <td class="r" style="white-space:nowrap;color:var(--label)">${esc(timeAgo(m.at))}</td>
-              </tr>`;}).join("")}</tbody></table></div>`;
-        }
-      };
-
-      pills.addEventListener("click", e => {
-        const b = e.target.closest(".pill");
-        if (b) { filter = b.dataset.f; draw(); }
-      });
-      document.getElementById("onlyMine").addEventListener("change", e => { onlyMine = e.target.checked; draw(); });
-      document.getElementById("modSearch").addEventListener("input", e => { query = e.target.value; draw(); });
-      document.getElementById("newLog").addEventListener("click", () => openLogModal(draw));
-      draw();
-    },
-    players: () => {
-      let filter = "everyone", query = "";
-      const teams = [...new Set(PLAYERS.map(p => p.team))];
-      const filters = [
-        { id: "everyone", label: "Everyone", dot: null, test: () => true },
-        { id: "staff", label: "Staff", dot: "#e6ebf0", test: isStaff },
-        ...teams.map(t => ({ id: "team:" + t, label: t, dot: TEAM_COLORS[t] || "#6b6e75", test: p => p.team === t }))
-      ];
-      const pills = document.getElementById("pills");
-      const body = document.getElementById("playerRows");
-
-      const draw = () => {
-        pills.innerHTML = filters.map(f => `
-          <button class="pill ${f.id === filter ? "active" : ""}" data-f="${esc(f.id)}" ${f.dot ? `style="--dot:${f.dot}"` : ""}>
-            ${f.dot ? '<span class="dot"></span>' : ""}${esc(f.label)} <span class="n">${PLAYERS.filter(f.test).length}</span>
-          </button>`).join("");
-
-        const active = filters.find(f => f.id === filter) || filters[0];
-        const q = query.trim().toLowerCase();
-        const rows = PLAYERS.filter(active.test).filter(p => !q || p.name.toLowerCase().includes(q) || (p.callsign || "").toLowerCase().includes(q));
-
-        body.innerHTML = rows.length ? rows.map(p => `
-          <tr>
-            <td><div class="pl"><span class="avatar">${esc(p.name.slice(0, 2).toUpperCase())}</span><span class="pname">${esc(p.name)}</span></div></td>
-            <td><span class="team" style="--dot:${TEAM_COLORS[p.team] || "#6b6e75"}"><i></i>${esc(p.team)}</span></td>
-            <td>${p.callsign ? esc(p.callsign) : "\u2013"}</td>
-            <td>${esc(p.location)}</td>
-            <td>${PERM_COLORS[p.permission] ? `<span class="badge" style="--c:${PERM_COLORS[p.permission]}">${esc(p.permission)}</span>` : "\u2013"}</td>
-          </tr>`).join("") : `<tr><td colspan="5"><div class="no-results">No players match.</div></td></tr>`;
-      };
-
-      pills.addEventListener("click", e => {
-        const b = e.target.closest(".pill");
-        if (b) { filter = b.dataset.f; draw(); }
-      });
-      document.getElementById("playerSearch").addEventListener("input", e => { query = e.target.value; draw(); });
-      draw();
-    }
-  };
-
-  const PAGES = {
-    shifts: () => `
-      <div class="shifts-grid">
-        <section class="panel"><div class="panel-head"><span class="t">Your shift</span></div><div class="shift-box" id="shMine"></div></section>
-        <section class="panel"><div class="panel-head"><span class="t">${ico("shifts")}On shift now</span></div><div class="panel-body" id="shNow"></div></section>
-        <section class="panel">
-          <div class="panel-head"><span class="t">${ico("trophy")}Leaderboard</span>
-            <div class="seg" id="lbTabs"><button data-r="7">7 days</button><button data-r="30">30 days</button></div></div>
-          <div class="lb" id="lbList"></div>
-        </section>
-      </div>
-      <section class="panel" style="margin-top:16px"><div class="panel-head"><span class="t">${ico("history")}Your recent shifts</span></div><div id="shRecent"></div></section>`,
-    staff: () => `<div class="seg" id="staffTabs" role="tablist"></div><div class="staff-body" id="staffBody"></div>`,
-    commands: () => `
-      <section class="term">
-        <div class="term-head"><span class="term-title">${esc(SERVER_NAME ? SERVER_NAME + " \u00B7 ER:LC" : "ER:LC")}</span></div>
-        <div class="term-body">
-          ${ico("chevron")}
-          <input id="cmdInput" type="text" placeholder=":m Server restart in 5 minutes" autocomplete="off" spellcheck="false" aria-label="Command">
-          <button class="btn-primary run" id="cmdRun" type="button"></button>
-        </div>
-      </section>
-      <div class="quick">${QUICK_COMMANDS.map((c, i) => `<button class="tile" type="button" data-i="${i}"><b>${esc(c.title)}</b><span>${esc(c.hint)}</span></button>`).join("")}</div>
-      <p class="quick-note">Commands that hand out admin or mod powers, or shut the server down, can only be run in game.</p>
-      <section class="panel">
-        <div class="panel-head"><span class="t">${ico("commands")}History</span></div>
-        <div class="hist" id="cmdHist"></div>
-      </section>`,
-    serverlogs: () => `
-      <div class="pills" id="logPills"></div>
-      <section class="panel logs"><div class="feed" id="logList"></div><div class="log-more" id="logMore" hidden></div></section>`,
-    bans: () => `<div id="banList"></div>`,
-    livemap: () => `
-      <div class="lm">
-        <aside class="lm-side">
-          <div class="lm-head">
-            <h2>Live map</h2>
-            <p id="lmSub"></p>
-            <label class="search">${ico("search")}<input id="lmSearch" type="search" placeholder="Find a player" autocomplete="off" aria-label="Find a player"></label>
-            <div class="pills" id="lmPills"></div>
-          </div>
-          <div class="lm-list" id="lmList"></div>
-        </aside>
-        <div class="lm-map" id="lmMap">
-          <div class="lm-stage" id="lmStage">
-            <img id="lmImg" src="${esc(MAP_URL)}" alt="ER:LC map" draggable="false" referrerpolicy="no-referrer">
-            <div id="lmLayer"></div>
-          </div>
-          <div class="lm-note" id="lmNote" hidden></div>
-          <div class="lm-ctrl">
-            <div class="lm-grp">
-              <button class="lm-btn" id="lmGrid" type="button" aria-label="Toggle grid" aria-pressed="true">${ico("hash")}</button>
-              <button class="lm-btn" id="lmReset" type="button" aria-label="Reset view">${ico("target")}</button>
-            </div>
-            <div class="lm-grp">
-              <button class="lm-btn" id="lmIn" type="button" aria-label="Zoom in">${ico("plus")}</button>
-              <button class="lm-btn" id="lmOut" type="button" aria-label="Zoom out">${ico("minus")}</button>
-              <button class="lm-btn" id="lmFull" type="button" aria-label="Fullscreen">${ico("expand")}</button>
-            </div>
-          </div>
-          <div class="lm-card" id="lmCard" hidden></div>
-          <div class="lm-coords" id="lmCoords" hidden></div>
-          <div class="lm-credit">Map: ER:LC</div>
-        </div>
-      </div>`,
-    moderations: () => `
-      <div class="filter-row">
-        <div class="pills" id="modPills" style="margin:0"></div>
-        <label class="only-mine"><span class="switch"><input type="checkbox" id="onlyMine"><i></i></span>Only mine</label>
-        <span class="spacer"></span>
-        <label class="search">${ico("search")}<input id="modSearch" type="search" placeholder="Player, reason or MOD-..." autocomplete="off" aria-label="Search moderations"></label>
-      </div>
-      <div id="modList"></div>`,
-    players: () => `
-      <div class="pills" id="pills"></div>
-      <div class="table-wrap">
-        <table class="players">
-          <thead><tr><th>Player</th><th>Team</th><th>Callsign</th><th>Location</th><th>Permission</th></tr></thead>
-          <tbody id="playerRows"></tbody>
-        </table>
-      </div>`,
-    overview: () => {
-      const cards = STATS.map(s => `
-        <div class="stat" style="--tint:${s.tint}">
-          <div class="stat-top"><span>${s.label}</span><span class="stat-icon">${ico(s.icon)}</span></div>
-          <div class="stat-value">${esc(s.value)}</div>
-          <div class="stat-note">${esc(s.note)}</div>
-        </div>`).join("");
-
-      const feed = SERVER_LOGS.length
-        ? `<div class="feed">${SERVER_LOGS.slice(0, 11).map(l => logRow(l, false)).join("")}</div>`
-        : empty("pulse", "No activity yet");
-
-      const shift = ACTIVE_SHIFTS.length
-        ? `<div class="feed">${ACTIVE_SHIFTS.map(m => `<div class="row"><span class="row-text"><b>${esc(m.name)}</b>${m.onBreak ? " (on break)" : ""}</span><span class="row-time">${esc(timeAgo(m.started))}</span></div>`).join("")}</div>`
-        : empty("shifts", "Nobody is on shift");
-
-      const mods = MODERATIONS.length
-        ? `<div class="feed">${MODERATIONS.map(m => `<div class="row"><span class="row-text"><b>${esc(m.mod)}</b> ${esc(typeById(m.type).verb)} <b>${esc(m.user)}</b></span><span class="row-time">${esc(timeAgo(m.at))}</span></div>`).join("")}</div>`
-        : empty("moderations", "No moderations logged yet");
-
-      const calls = MOD_CALLS.length
-        ? `<div class="feed">${MOD_CALLS.map(c => `<div class="row"><span class="row-text"><b>${esc(c.user)}</b> needs a moderator</span><span class="row-time">${esc(timeAgo(c.at))}</span></div>`).join("")}</div>`
-        : empty("phone", "No mod calls");
-
-      return `
-        <div class="stats">${cards}</div>
-        <div class="grid">
-          ${panel("Live activity", "pulse", { href: "#serverlogs", text: "All server logs" }, feed, "tall")}
-          ${panel("On shift", "shifts", { href: "#shifts", text: "Leaderboard" }, shift, "tall")}
-        </div>
-        <div class="grid">
-          ${panel("Recent moderations", "moderations", { href: "#moderations", text: "View all" }, mods, "short")}
-          ${panel("Mod calls", "phone", null, calls, "short")}
-        </div>`;
-    }
-  };
-  // ----------------------------------------
-
-  const sidebar = document.getElementById("sidebar");
-  let flat = NAV.flatMap(g => g.items);
-
-  sidebar.innerHTML = NAV.map(g => `
-    <div class="group">
-      <div class="group-label">${g.group}</div>
-      ${g.items.map(i => `
-        <button class="item" data-id="${i.id}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[i.id]}</svg>
-          ${i.label}
-        </button>`).join("")}
-    </div>`).join("");
-
-  let teardown = null;
-  function show(id) {
-    const page = flat.find(p => p.id === id) || flat.find(p => p.id === DEFAULT_PAGE) || flat[0];
-    document.querySelectorAll(".item").forEach(b => { const on = b.dataset.id === page.id; b.classList.toggle("active", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"); });
-    if (teardown) { teardown(); teardown = null; }
-    document.querySelector(".content").classList.toggle("flush", !!(HEADINGS[page.id] && HEADINGS[page.id]().flush));
-    const head = HEADINGS[page.id] ? HEADINGS[page.id]() : { title: page.label, sub: page.sub };
-    document.getElementById("title").innerHTML = head.title;
-    document.getElementById("sub").innerHTML = head.sub;
-    document.getElementById("headTools").innerHTML = head.tools || "";
-    document.getElementById("view").innerHTML = (PAGES[page.id] || (() => '<div class="placeholder">Coming soon.</div>'))();
-    if (AFTER[page.id]) { const cleanup = AFTER[page.id](); if (typeof cleanup === "function") teardown = cleanup; }
-    document.title = page.label + " | Moderator Panel";
-  }
-
-  sidebar.addEventListener("click", e => {
-    const btn = e.target.closest(".item");
-    if (btn) location.hash = btn.dataset.id;
-  });
-
-  // ---------- load data from backend.py ----------
-  const loadPlayers = async () => {
-    PLAYERS.splice(0, PLAYERS.length, ...normalizePlayers(await api("/api/players"))
-      .map(p => ({ ...p, location: [p.postal ? "Postal " + p.postal : "", p.street].filter(Boolean).join(" · ") || "–" })));
-  };
-  const loadState = async () => {
-    const s = await api("/api/state");
-    if (s.overview) {
-      const o = s.overview, st = o.staff;
-      MAX_PLAYERS = o.maxPlayers; SERVER_NAME = o.name;
-      const set = (i, value, note) => Object.assign(STATS[i], { value: String(value), note });
-      set(0, o.erlcOk ? `${o.players}/${o.maxPlayers}` : "–", o.erlcOk ? `${o.onTeam} on a team` : o.error);
-      set(1, o.queue, "");
-      set(2, st.total, `${st.admin} admin · ${st.mod} mod · ${st.helper} helper`);
-      set(3, o.modCalls.length, "waiting for a moderator");
-      set(4, o.logsToday, "");
-      set(5, o.bolos, "");
-      MOD_CALLS.splice(0, MOD_CALLS.length, ...o.modCalls);
-    }
-    if (s.moderations) MODERATIONS.splice(0, MODERATIONS.length, ...s.moderations);
-    if (s.shifts) setShifts(s.shifts);
-    if (s.staff) STAFF.splice(0, STAFF.length, ...s.staff);
-    if (s.commands) COMMAND_HISTORY.splice(0, COMMAND_HISTORY.length, ...s.commands);
-    if (flat.some(p => p.id === "serverlogs")) SERVER_LOGS.splice(0, SERVER_LOGS.length, ...await api(LOGS_ENDPOINT));
-  };
-
-  (async () => {
-    const err = new URLSearchParams(location.search).get("error");
-    let me;
-    try { me = await api("/api/me"); }
-    catch (e) {
-      document.getElementById("title").textContent = err === "noaccess" ? "No access" : "Sign in";
-      document.getElementById("view").innerHTML = err === "noaccess"
-        ? '<div class="placeholder">Your Discord account doesn\'t have a staff role in the server.</div>'
-        : `<div class="placeholder"><a href="/auth/login">Sign in with Discord</a></div>`;
-      document.querySelectorAll(".group").forEach(g => g.remove());
-      return;
-    }
-    USERNAME = me.name; USER_AVATAR = me.avatar; USER_ID = me.id;
-    USER_RANK = { helper: "Helper", mod: "Mod", admin: "Admin", owner: "Owner" }[me.level];
-    flat = flat.filter(p => me.pages.includes(p.id));
-    document.querySelectorAll(".item").forEach(b => { if (!me.pages.includes(b.dataset.id)) b.remove(); });
-    document.querySelectorAll(".group").forEach(g => { if (!g.querySelector(".item")) g.remove(); });
-
-    await Promise.all([loadState().catch(() => {}), me.pages.includes("players") && loadPlayers().catch(() => {})]);
-    show(location.hash.slice(1));
-    window.addEventListener("hashchange", () => show(location.hash.slice(1)));
-
-    // Keep shared data fresh. Only pages without inputs are redrawn, so typing isn't interrupted.
-    setInterval(async () => {
-      await Promise.all([loadState().catch(() => {}), me.pages.includes("players") && loadPlayers().catch(() => {})]);
-      if (location.hash.slice(1) === "overview" || !location.hash) show("overview");
-    }, 15000);
-  })();
-</script>
+<script src="/panel.js"></script>
 </body>
 </html>
