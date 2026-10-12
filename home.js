@@ -4,8 +4,8 @@ const SITE_LOGO   = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAYAA
 const HERO_IMAGE  = "";   // optional background photo, e.g. "/img/hero.jpg"
 const HERO_TITLE  = ["OHIO STATE", "ROLEPLAY"];
 const HERO_SUB    = "Ohio's #1 Roleplay";
-const DISCORD_INVITE = "https://discord.gg/ohiovc";
-const PLAY_URL    = "https://erlc.gg/join?code=Ohiovc";                 // ERLC server link for the Play button (hardcode later)
+const DISCORD_INVITE = "https://discord.gg/yourinvite";
+const PLAY_URL    = "#";                 // ERLC server link for the Play button (hardcode later)
 const PANEL_URL   = "/panel";   // backend checks staff access            // where the moderation panel lives
 const LOGIN_URL   = "/auth/login?mode=public";   // Discord sign-in for anyone (staff also get panel access)
 const LOGOUT_URL  = "/auth/logout";
@@ -83,19 +83,29 @@ $('rate').onclick = e => { const b = e.target.closest('button'); if (b){ stars =
 drawRate();
 
 // reviews
+let hasReview = false;
 function renderReviews(list){
-  if (!list.length){ $('track').innerHTML = '<p class="note" style="padding:0 24px">No reviews yet.</p>'; $('track').style.animation = 'none'; return; }
-  $('track').style.animation = '';
-  while (list.length < 8) list = list.concat(list);
+  const track = $('track'), box = track.parentElement;
+  track.style.animation = 'none';
+  if (!list.length){ track.innerHTML = '<p class="note" style="padding:0 24px">No reviews yet.</p>'; return; }
   const card = r => `<div class="rev"><b>${esc(r.name)}</b><div class="stars">${'★'.repeat(r.stars||5)}</div><p>${esc(r.text)}</p></div>`;
   const html = list.map(card).join('');
-  $('track').innerHTML = html + html;
+  track.innerHTML = html;
+  // only scroll (and repeat for a seamless loop) when the cards don't fit on screen
+  if (track.scrollWidth > box.clientWidth){ track.innerHTML = html + html; track.style.animation = ''; }
+  else track.style.paddingLeft = '24px';
 }
-async function loadReviews(){
+async function loadReviews(initial = true){
   try{
     const r = await fetch(REVIEWS_URL, {credentials:'include'});
     if (!r.ok) throw 0;
-    renderReviews(await r.json());
+    const list = await r.json();
+    renderReviews(list);
+    const mine = list.find(x => x.mine);
+    hasReview = !!mine;
+    $('postBtn').textContent = mine ? 'Save changes' : 'Post review';
+    if (mine && !$('reviewText').value){ stars = mine.stars || 5; drawRate(); $('reviewText').value = mine.text; }
+    if (initial) $('reviewNote').textContent = mine ? 'You already reviewed us. You can edit your review here.' : '';
   }catch{ renderReviews([]); }
 }
 $('postBtn').onclick = async () => {
@@ -105,9 +115,9 @@ $('postBtn').onclick = async () => {
   try{
     const r = await fetch(REVIEWS_URL, {method:'POST', credentials:'include', headers:{'Content-Type':'application/json','X-Requested-With':'panel'}, body:JSON.stringify({stars, text})});
     if (!r.ok) throw 0;
-    $('reviewText').value = ''; $('reviewNote').textContent = 'Review posted.';
-    loadReviews();
-  }catch{ $('reviewNote').textContent = 'Could not post your review. Try again.'; }
+    await loadReviews(false);
+    $('reviewNote').textContent = 'Review saved. You can edit it any time.';
+  }catch{ $('reviewNote').textContent = 'Could not save your review. Try again.'; }
   $('postBtn').disabled = false;
 };
 
