@@ -16,6 +16,8 @@ Run it
 Fill in the CONFIG section below first. Secrets come from environment variables, not this file:
   SECRET_KEY, DISCORD_CLIENT_SECRET, DISCORD_BOT_TOKEN, ERLC_SERVER_KEY (optional), ERLC_GLOBAL_KEY (optional)
 """
+import base64
+import hashlib
 import json
 import os
 import math
@@ -61,6 +63,16 @@ DISCORD_GUILD_ID = "1534782642262769744"
 ACCESS_ROLE_ID = "1558707561618997258"
 # Discord user IDs that can always do everything, whatever their panel roles, so nobody gets locked out.
 OWNER_IDS = ["1374931077801709669", "1498514468252942436", "1536879503421345932"]   # Knightwolf2434, Marcus1290148, stormz5m
+
+# Roblox verification (the /verify page). In the Roblox Creator Dashboard (OAuth 2.0 app), add SITE_URL + "/verify/callback"
+# as a redirect URL and use the scopes "openid" and "profile". Put ROBLOX_CLIENT_SECRET and SUPABASE_SECRET_KEY in .env.
+ROBLOX_CLIENT_ID = "2233572014513716600"   # your Roblox OAuth app's client ID
+ROBLOX_CLIENT_SECRET = os.environ.get("ROBLOX_CLIENT_SECRET", "")
+SUPABASE_URL = "https://oyklenlxfczmdihruqnl.supabase.co"   # Project Settings > API
+SUPABASE_KEY = os.environ.get("SUPABASE_SECRET_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")   # secret key: backend only, never put it in a web page
+VERIFIED_ROLE_ID = ""                     # Discord role given on verify (leave empty to skip)
+UNVERIFIED_ROLE_ID = ""                   # Discord role removed on verify (leave empty to skip)
+SET_NICKNAME_TO_ROBLOX = True             # also set their server nickname to their Roblox username
 
 # ER:LC
 ERLC_SERVER_KEY = os.environ.get("ERLC_SERVER_KEY", "") # Server Settings > API in ER:LC
@@ -371,6 +383,9 @@ def auth_login():
     state = secrets.token_urlsafe(24)
     session["oauth_state"] = state
     session["oauth_mode"] = "public" if request.args.get("mode") == "public" else "staff"
+    nxt = {"start": "/verify/start"}.get(request.args.get("next"))   # only these places can be returned to
+    if nxt:
+        session["oauth_next"] = nxt
     return redirect("https://discord.com/oauth2/authorize?" + urlencode({
         "client_id": DISCORD_CLIENT_ID, "redirect_uri": callback_url(),
         "response_type": "code", "scope": "identify", "state": state, "prompt": "none"}))
@@ -379,6 +394,7 @@ def auth_login():
 @app.get("/auth/callback")
 def auth_callback():
     mode = session.pop("oauth_mode", "staff")
+    nxt = session.pop("oauth_next", "/")
     bad = "/?error=login" if mode == "public" else "/login?error=login"
     code = request.args.get("code")
     if not code or not request.args.get("state") or request.args.get("state") != session.pop("oauth_state", None):
@@ -405,7 +421,7 @@ def auth_callback():
         if status == 200 and has_access(user["id"], member):
             session["user"] = {"id": user["id"], "name": display_name(member), "avatar": avatar_url(user),
                                "checked": time.time()}
-        return redirect("/")
+        return redirect(nxt)
     if status == 404:
         return redirect("/login?error=noaccess")
     if status != 200:
@@ -1546,6 +1562,120 @@ def home_team():
     return jsonify(cached("home_team", 600, fetch_team))
 
 
+# ------------------------------------------------------------------------------ Roblox verification
+def sb(method, path, **kw):
+    """Supabase REST call (the key stays on the server)."""
+    headers = {"apikey": SUPABASE_KEY, "Content-Type": "application/json"}
+    if not SUPABASE_KEY.startswith("sb_"):   # old-style JWT keys also go in Authorization; new sb_secret_ keys use apikey only
+        headers["Authorization"] = "Bearer " + SUPABASE_KEY
+    headers.update(kw.pop("headers", {}))
+    return requests.request(method, f"{SUPABASE_URL}/rest/v1/{path}", headers=headers, timeout=10, **kw)
+
+
+def link_accounts(discord_id, roblox_id, roblox_name):
+    """Saves the Discord <-> Roblox link. Returns None on success or an error code."""
+    try:
+        r = sb("GET", "verifications", params={"roblox_id": f"eq.{roblox_id}", "select": "discord_id"})
+        if r.status_code != 200:
+            return "db"
+        if any(str(x["discord_id"]) != str(discord_id) for x in r.json()):
+            return "taken"   # that Roblox account already belongs to another Discord account
+        r = sb("POST", "verifications", params={"on_conflict": "discord_id"},
+               headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
+               json={"discord_id": discord_id, "roblox_id": roblox_id, "roblox_name": roblox_name,
+                     "verified_at": datetime.now(timezone.utc).isoformat()})
+        return None if r.status_code in (200, 201, 204) else "db"
+    except (requests.RequestException, ValueError, KeyError):
+        return "db"
+
+
+def apply_verified_discord(discord_id, roblox_name):
+    """Gives the Verified role, removes Unverified, sets the nickname. Failures are ignored (the link is already saved)."""
+    base = f"{DISCORD_API}/guilds/{DISCORD_GUILD_ID}/members/{discord_id}"
+    hdr = bot_headers("Roblox verification")
+    try:
+        if VERIFIED_ROLE_ID:
+            requests.put(f"{base}/roles/{VERIFIED_ROLE_ID}", headers=hdr, timeout=10)
+        if UNVERIFIED_ROLE_ID:
+            requests.delete(f"{base}/roles/{UNVERIFIED_ROLE_ID}", headers=hdr, timeout=10)
+        if SET_NICKNAME_TO_ROBLOX:
+            requests.patch(base, headers=dict(hdr, **{"Content-Type": "application/json"}), json={"nick": roblox_name}, timeout=10)
+    except requests.RequestException:
+        pass
+
+
+@app.get("/verify/start")
+def verify_start():
+    if not (ROBLOX_CLIENT_ID and ROBLOX_CLIENT_SECRET and SUPABASE_URL and SUPABASE_KEY):
+        return redirect("/verify?error=setup")
+    if not home_user():   # we need to know which Discord account is verifying
+        return redirect("/auth/login?mode=public&next=start")
+    verifier, state = secrets.token_urlsafe(64), secrets.token_urlsafe(24)
+    session["rbx"] = {"state": state, "verifier": verifier}
+    challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
+    return redirect("https://apis.roblox.com/oauth/v1/authorize?" + urlencode({
+        "client_id": ROBLOX_CLIENT_ID, "redirect_uri": SITE_URL + "/verify/callback", "scope": "openid profile",
+        "response_type": "code", "state": state, "code_challenge": challenge, "code_challenge_method": "S256"}))
+
+
+@app.get("/verify/callback")
+def verify_callback():
+    rbx = session.pop("rbx", None)
+    u = home_user()
+    if not u:
+        return redirect("/verify?error=signin")
+    if request.args.get("error"):
+        return redirect("/verify?error=denied")
+    code = request.args.get("code")
+    if not rbx or not code or request.args.get("state") != rbx["state"]:
+        return redirect("/verify?error=failed")
+    try:
+        t = requests.post("https://apis.roblox.com/oauth/v1/token", data={
+            "client_id": ROBLOX_CLIENT_ID, "client_secret": ROBLOX_CLIENT_SECRET, "grant_type": "authorization_code",
+            "code": code, "redirect_uri": SITE_URL + "/verify/callback", "code_verifier": rbx["verifier"]}, timeout=10)
+        if t.status_code != 200:
+            return redirect("/verify?error=failed")
+        me = requests.get("https://apis.roblox.com/oauth/v1/userinfo",
+                          headers={"Authorization": "Bearer " + t.json()["access_token"]}, timeout=10)
+        info = me.json() if me.status_code == 200 else {}
+    except (requests.RequestException, KeyError, ValueError):
+        return redirect("/verify?error=failed")
+    rid, rname = str(info.get("sub", "")), str(info.get("preferred_username") or "")
+    if not rid.isdigit() or not USERNAME_RE.match(rname):
+        return redirect("/verify?error=failed")
+    status, _member = discord_member(u["id"])
+    if status == 404:
+        return redirect("/verify?error=notinserver")
+    if status != 200:
+        return redirect("/verify?error=failed")
+    err = link_accounts(u["id"], rid, rname)
+    if err:
+        return redirect("/verify?error=" + err)
+    apply_verified_discord(u["id"], rname)
+    session["verified"] = {"roblox_username": rname, "roblox_id": rid, "discord_id": u["id"]}
+    return redirect("/verify/done")
+
+
+@app.get("/verify/done")
+def page_verified():
+    if not session.get("verified"):
+        return redirect("/verify")
+    return send_from_directory(STATIC_DIR, "verified.html")
+
+
+@app.get("/verified.js")
+def page_verified_js():
+    return send_from_directory(STATIC_DIR, "verified.js")
+
+
+@app.get("/api/verify/me")
+def verify_me():
+    v = session.get("verified")
+    if not v:
+        return "", 401
+    return jsonify(dict(v, guild_url=f"https://discord.com/channels/{DISCORD_GUILD_ID}"))
+
+
 # ------------------------------------------------------------------------------ pages
 @app.get("/")
 def page_home():
@@ -1562,6 +1692,16 @@ def page_panel():
 @app.get("/home.js")
 def page_home_js():
     return send_from_directory(STATIC_DIR, "home.js")
+
+
+@app.get("/verify")
+def page_verify():
+    return send_from_directory(STATIC_DIR, "verify.html")
+
+
+@app.get("/verify.js")
+def page_verify_js():
+    return send_from_directory(STATIC_DIR, "verify.js")
 
 
 LOGIN_ERRORS = {
