@@ -4,8 +4,8 @@ const SITE_LOGO   = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAYAA
 const HERO_IMAGE  = "";   // optional background photo, e.g. "/img/hero.jpg"
 const HERO_TITLE  = ["OHIO STATE", "ROLEPLAY"];
 const HERO_SUB    = "Ohio's #1 Roleplay";
-const DISCORD_INVITE = "https://discord.gg/yourinvite";
-const PLAY_URL    = "#";                 // ERLC server link for the Play button (hardcode later)
+const DISCORD_INVITE = "https://discord.gg/ohiovc";
+const PLAY_URL    = "https://erlc.gg/join/Ohiovc";                 // ERLC server link for the Play button (hardcode later)
 const PANEL_URL   = "/panel";   // backend checks staff access            // where the moderation panel lives
 const LOGIN_URL   = "/auth/login?mode=public";   // Discord sign-in for anyone (staff also get panel access)
 const LOGOUT_URL  = "/auth/logout";
