@@ -35,7 +35,7 @@ from flask import Flask, g, jsonify, redirect, request, send_from_directory, ses
 # Load KEY=value lines from .env next to this file. Real environment variables win.
 _env = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
 if os.path.exists(_env):
-    with open(_env) as f:
+    with open(_env, encoding="utf-8-sig") as f:   # -sig: Windows Notepad adds a BOM that would corrupt the first key
         for line in f:
             k, sep, v = line.strip().partition("=")
             if sep and not k.startswith("#"):
