@@ -70,8 +70,8 @@ ROBLOX_CLIENT_ID = "2233572014513716600"   # your Roblox OAuth app's client ID
 ROBLOX_CLIENT_SECRET = os.environ.get("ROBLOX_CLIENT_SECRET", "")
 SUPABASE_URL = "https://oyklenlxfczmdihruqnl.supabase.co"   # Project Settings > API
 SUPABASE_KEY = os.environ.get("SUPABASE_SECRET_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")   # secret key: backend only, never put it in a web page
-VERIFIED_ROLE_ID = ""                     # Discord role given on verify (leave empty to skip)
-UNVERIFIED_ROLE_ID = ""                   # Discord role removed on verify (leave empty to skip)
+VERIFIED_ROLE_ID = "1555751134549778553"                     # Discord role given on verify (leave empty to skip)
+UNVERIFIED_ROLE_ID = "1555769269952712744"                   # Discord role removed on verify (leave empty to skip)
 SET_NICKNAME_TO_ROBLOX = True             # also set their server nickname to their Roblox username
 
 # ER:LC
