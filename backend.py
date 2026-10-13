@@ -53,7 +53,7 @@ DB_PATH = "panel.db"
 STATIC_DIR = "."                          # folder holding index.html and an optional img/ folder
 
 # Discord application (discord.com/developers). Add SITE_URL + "/auth/callback" under OAuth2 > Redirects.
-DISCORD_CLIENT_ID = "2233572014513716600"
+DISCORD_CLIENT_ID = "1513580238997815526"
 DISCORD_CLIENT_SECRET = os.environ["DISCORD_CLIENT_SECRET"]
 DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]           # the bot must be in your server
 DISCORD_GUILD_ID = "1534782642262769744"
@@ -66,7 +66,7 @@ OWNER_IDS = ["1374931077801709669", "1498514468252942436", "1536879503421345932"
 
 # Roblox verification (the /verify page). In the Roblox Creator Dashboard (OAuth 2.0 app), add SITE_URL + "/verify/callback"
 # as a redirect URL and use the scopes "openid" and "profile". Put ROBLOX_CLIENT_SECRET and SUPABASE_SECRET_KEY in .env.
-ROBLOX_CLIENT_ID = "6664660676859037006"   # your Roblox OAuth app's client ID
+ROBLOX_CLIENT_ID = "2233572014513716600"   # your Roblox OAuth app's client ID
 ROBLOX_CLIENT_SECRET = os.environ.get("ROBLOX_CLIENT_SECRET", "")
 SUPABASE_URL = "https://oyklenlxfczmdihruqnl.supabase.co"   # Project Settings > API
 SUPABASE_KEY = os.environ.get("SUPABASE_SECRET_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")   # secret key: backend only, never put it in a web page
