@@ -1577,6 +1577,7 @@ def link_accounts(discord_id, roblox_id, roblox_name):
     try:
         r = sb("GET", "verifications", params={"roblox_id": f"eq.{roblox_id}", "select": "discord_id"})
         if r.status_code != 200:
+            print("Supabase lookup failed:", r.status_code, r.text[:300])   # shows in this window only
             return "db"
         if any(str(x["discord_id"]) != str(discord_id) for x in r.json()):
             return "taken"   # that Roblox account already belongs to another Discord account
@@ -1584,8 +1585,12 @@ def link_accounts(discord_id, roblox_id, roblox_name):
                headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
                json={"discord_id": discord_id, "roblox_id": roblox_id, "roblox_name": roblox_name,
                      "verified_at": datetime.now(timezone.utc).isoformat()})
-        return None if r.status_code in (200, 201, 204) else "db"
-    except (requests.RequestException, ValueError, KeyError):
+        if r.status_code not in (200, 201, 204):
+            print("Supabase save failed:", r.status_code, r.text[:300])   # shows in this window only
+            return "db"
+        return None
+    except (requests.RequestException, ValueError, KeyError) as e:
+        print("Supabase error:", repr(e)[:300])
         return "db"
 
 
@@ -1606,7 +1611,10 @@ def apply_verified_discord(discord_id, roblox_name):
 
 @app.get("/verify/start")
 def verify_start():
-    if not (ROBLOX_CLIENT_ID and ROBLOX_CLIENT_SECRET and SUPABASE_URL and SUPABASE_KEY):
+    missing = [n for n, v in (("ROBLOX_CLIENT_ID", ROBLOX_CLIENT_ID), ("ROBLOX_CLIENT_SECRET", ROBLOX_CLIENT_SECRET),
+                              ("SUPABASE_URL", SUPABASE_URL), ("SUPABASE_SECRET_KEY", SUPABASE_KEY)) if not v]
+    if missing:
+        print("Verification isn't set up. Missing or empty:", ", ".join(missing))   # shows in this window, not on the site
         return redirect("/verify?error=setup")
     if not home_user():   # we need to know which Discord account is verifying
         return redirect("/auth/login?mode=public&next=start")
