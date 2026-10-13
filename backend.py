@@ -53,7 +53,7 @@ DB_PATH = "panel.db"
 STATIC_DIR = "."                          # folder holding index.html and an optional img/ folder
 
 # Discord application (discord.com/developers). Add SITE_URL + "/auth/callback" under OAuth2 > Redirects.
-DISCORD_CLIENT_ID = "1513580238997815526"
+DISCORD_CLIENT_ID = "2233572014513716600"
 DISCORD_CLIENT_SECRET = os.environ["DISCORD_CLIENT_SECRET"]
 DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]           # the bot must be in your server
 DISCORD_GUILD_ID = "1534782642262769744"
