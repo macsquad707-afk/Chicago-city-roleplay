@@ -1583,8 +1583,7 @@ def link_accounts(discord_id, roblox_id, roblox_name):
             return "taken"   # that Roblox account already belongs to another Discord account
         r = sb("POST", "verifications", params={"on_conflict": "discord_id"},
                headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
-               json={"discord_id": discord_id, "roblox_id": roblox_id, "roblox_name": roblox_name,
-                     "verified_at": datetime.now(timezone.utc).isoformat()})
+               json={"discord_id": discord_id, "roblox_id": roblox_id, "roblox_name": roblox_name})   # verified_at is filled in by the table's default
         if r.status_code not in (200, 201, 204):
             print("Supabase save failed:", r.status_code, r.text[:300])   # shows in this window only
             return "db"
