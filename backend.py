@@ -1665,9 +1665,16 @@ def verify_callback():
 
 @app.get("/verify/done")
 def page_verified():
-    if not session.get("verified"):
+    v = session.get("verified")
+    if not v:
         return redirect("/verify")
-    return send_from_directory(STATIC_DIR, "verified.html")
+    from html import escape
+    with open(os.path.join(STATIC_DIR, "verified.html"), encoding="utf-8") as f:
+        page = f.read()
+    for key, val in (("__RNAME__", v["roblox_username"]), ("__RID__", v["roblox_id"]), ("__DID__", v["discord_id"]),
+                     ("__GUILD__", f"https://discord.com/channels/{DISCORD_GUILD_ID}")):
+        page = page.replace(key, escape(str(val)))   # filled in here, so the page doesn't need any script
+    return page
 
 
 @app.get("/verified.js")
