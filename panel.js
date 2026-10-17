@@ -60,9 +60,6 @@
     cancelleave:'<path d="M8 2v4"/> <path d="M16 2v4"/> <rect width="18" height="18" x="3" y="4" rx="2"/> <path d="M3 10h18"/> <path d="m14 14-4 4"/> <path d="m10 14 4 4"/>',
     external:   '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/>',
     roles:      '<path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19"/> <path d="M9.586 5.586A2 2 0 0 0 8.172 5H3a1 1 0 0 0-1 1v5.172a2 2 0 0 0 .586 1.414L8.29 18.29a2.426 2.426 0 0 0 3.42 0l3.58-3.58a2.426 2.426 0 0 0 0-3.42z"/> <circle cx="6.5" cy="9.5" r=".5" fill="currentColor"/>',
-    discord:    '<path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/> <path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/>',
-    idcard:     '<path d="M16 10h2"/> <path d="M16 14h2"/> <path d="M6.17 15a3 3 0 0 1 5.66 0"/> <circle cx="9" cy="11" r="2"/> <rect x="2" y="5" width="20" height="14" rx="2"/>',
-    listtree:   '<path d="M21 12h-8"/> <path d="M21 6H8"/> <path d="M21 18h-8"/> <path d="M3 6v4c0 1.1.9 2 2 2h3"/> <path d="M3 10v6c0 1.1.9 2 2 2h3"/>',
     automated:  '<path d="M10.268 21a2 2 0 0 0 3.464 0"/> <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
     sidebar:    '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path class="side-chev" d="M16 10l-2 2 2 2"/>'
   };
@@ -89,11 +86,6 @@
       { id: "quotas", label: "Quotas & leave", sub: "Weekly shift goals and time away." },
       { id: "roles", label: "Roles", sub: "Panel roles you can give staff. What each role can do is set in Settings." },
       { id: "settings", label: "Settings", sub: "Who can do what, and how the panel behaves." }
-    ]},
-    { group: "Discord Integration", icon: "discord", nested: true, items: [
-      { id: "dnick", icon: "idcard",   label: "Nicknames", sub: "Prefixes added to Discord nicknames while someone is on shift or on leave." },
-      { id: "dchan", icon: "hash",     label: "Channels",  sub: "Where the panel posts logs in your Discord server." },
-      { id: "drole", icon: "listtree", label: "Roles",     sub: "Discord roles the panel gives and removes automatically." }
     ]}
   ];
 
@@ -793,7 +785,7 @@
       try { await onSubmit(form); close(); }
       catch (err) { form.querySelector(".f-err").textContent = err.message; btn.disabled = false; }
     });
-    form.querySelector(".modal-body input, .modal-body textarea, .modal-body select")?.focus();
+    form.querySelector(".modal-body input, .modal-body textarea").focus();
   }
 
   const empty = (icon, text, h) => `<div class="empty"${h ? ` style="min-height:${h}px"` : ""}>${ico(icon)}<span>${text}</span></div>`;
@@ -818,9 +810,6 @@
       sub: "Set up messages the panel posts in game on a timer.",
       tools: USER_PERMS.includes("automated.manage") ? `<button class="btn-primary" id="autoNew" type="button">${ico("plus")}Create message</button>` : ""
     }),
-    dnick: () => ({ title: "Nicknames", sub: "Prefixes added to Discord nicknames while someone is on shift or on leave." }),
-    dchan: () => ({ title: "Channels", sub: "Where the panel posts logs in your Discord server." }),
-    drole: () => ({ title: "Roles", sub: "Discord roles the panel gives and removes automatically." }),
     serverlogs: () => ({
       title: "Server logs",
       sub: `Joins, leaves, kills, commands and mod calls from your ER:LC server. You can look back ${LOG_RETENTION_DAYS} days, or ${COMMAND_RETENTION_DAYS} for commands.`,
@@ -856,114 +845,15 @@
     "commands.run": "Run commands", "staff.view": "See the staff team", "staff.manage": "Manage staff (strikes, shifts, leave)",
     "shifts.use": "Clock in for shifts", "moderations.delete": "Delete moderation logs", "roles.assign": "Give staff roles",
     "settings.manage": "Change settings and roles",
-    "automated.manage": "Manage automated messages",
-    "discord.manage": "Manage Discord integration"
+    "automated.manage": "Manage automated messages"
   };
   const PERM_GROUPS = [
     ["Server", ["overview.view", "players.view", "livemap.view"]],
     ["Moderation", ["moderations.view", "moderations.delete", "bans.view", "bans.remove", "logs.view", "logs.clear", "commands.run", "automated.manage"]],
-    ["Team", ["staff.view", "staff.manage", "roles.assign", "shifts.use", "settings.manage", "discord.manage"]]
+    ["Team", ["staff.view", "staff.manage", "roles.assign", "shifts.use", "settings.manage"]]
   ];
 
   // Runs after a page renders (wire up events here)
-  // Discord Integration pages (Nicknames / Channels / Roles) share this.
-  function discordPage(kind) {
-    const root = document.getElementById("dPage");
-    let cfg = null, opts = { channels: [], roles: [] }, keys = {}, optErr = "", alive = true;
-
-    const select = (name, list, value, ph) => {
-      const known = list.some(o => o.id === value);
-      return `<div class="dsel">
-        <span class="dsel-ico">${ico(kind === "roles" ? "listtree" : "hash")}</span>
-        <select name="${name}"><option value="">${ph}</option>
-          ${value && !known ? `<option value="${esc(value)}" selected>Unknown (${esc(value)})</option>` : ""}
-          ${list.map(o => `<option value="${o.id}" ${o.id === value ? "selected" : ""}>${kind === "roles" ? "" : "# "}${esc(o.name)}</option>`).join("")}
-        </select>
-        <button class="dsel-x" type="button" data-clear="${name}" aria-label="Clear" title="Clear">${ico("close")}</button>
-      </div>`;
-    };
-    const field = (label, hint, control) => `<div class="dint-field"><label class="dint-label">${label}</label>${control}${hint ? `<small>${hint}</small>` : ""}</div>`;
-    const refreshBtn = `<button class="dint-btn" type="button" data-refresh title="Refresh from Discord" aria-label="Refresh from Discord">${ico("refresh")}</button>`;
-    const card = (title, sub, body) => `<section class="dint-card"><div class="dint-head"><h3>${title}</h3><p>${sub}</p></div>${body}
-      <div class="dint-foot"><button class="btn-primary" type="button" data-save>${ico("check")}Save changes</button></div></section>`;
-
-    const draw = () => {
-      if (kind === "nick") {
-        root.innerHTML = card("Discord Nickname Prefixes", "Added in front of a member's Discord nickname automatically.",
-          field("On Shift Nickname", "Shown while someone is on shift. A space is added after it automatically. Max 16 characters.",
-            `<input class="dint-input" name="shift" maxlength="16" value="${esc(cfg.nick.shift)}" placeholder="e.g. [ON]" autocomplete="off">`) +
-          field("On LOA Nickname", "Shown while someone is on leave of absence.",
-            `<input class="dint-input" name="loa" maxlength="16" value="${esc(cfg.nick.loa)}" placeholder="e.g. [LOA]" autocomplete="off">`));
-      } else if (kind === "channels") {
-        const gear = g => `<button class="dint-btn" type="button" data-gear="${g}" title="Split into separate channels" aria-label="Split into separate channels">${ico("settings")}</button>`;
-        const row = (g, label, hint, splittable) => {
-          const n = splittable ? (keys[g] || []).filter(k => cfg.overrides[k.key]).length : 0;
-          return field(label + (n ? ` <span class="dint-status">${n} override${n > 1 ? "s" : ""}</span>` : ""), hint,
-            `<div class="dint-row">${select(g, opts.channels, cfg.channels[g], "Select a channel")}${refreshBtn}${splittable ? gear(g) : ""}</div>`);
-        };
-        root.innerHTML = (optErr ? `<div class="dint-warn">${esc(optErr)}</div>` : "") + card("Discord Channels", "Where the panel posts its logs in your Discord server.",
-          row("shift", "Shift Logs", "Shift start, break and end.", true) +
-          row("moderation", "Moderation Logs", "Warnings, kicks, bans and other moderation. Use the gear to send each type to its own channel.", true) +
-          row("loa", "Leave of Absence", "Leave requests and their results.", true) +
-          row("reviews", "Reviews", "Staff review announcements.", false) +
-          row("promotion", "Promotion Logs", "When someone is promoted.", false) +
-          row("demotion", "Demotion Logs", "When someone is demoted.", false));
-      } else {
-        const row = (k, label, hint) => field(label, hint, `<div class="dint-row">${select(k, opts.roles, cfg.roles[k], "Select a role")}${refreshBtn}</div>`);
-        root.innerHTML = (optErr ? `<div class="dint-warn">${esc(optErr)}</div>` : "") + card("Discord Roles", "Roles the panel gives and removes automatically. The bot's role must sit above them.",
-          row("shift", "On Shift Role", "Given while someone is on shift.") +
-          row("break", "On Break Role", "Given while someone is on a break.") +
-          row("loa", "LOA Role", "Given while someone is on leave of absence."));
-      }
-    };
-
-    const collect = () => {
-      const out = {};
-      root.querySelectorAll("input[name], select[name]").forEach(el => { out[el.name] = el.value.trim(); });
-      return out;
-    };
-    const save = async btn => {
-      btn.disabled = true;
-      try {
-        const data = await api("/api/discord", { [kind]: collect() });
-        cfg = data.config; keys = data.overrideKeys; draw(); toast("Saved");
-      } catch (err) { toast(err.message); btn.disabled = false; }
-    };
-    const load = async fresh => {
-      if (kind === "nick") return;
-      try {
-        const o = await api("/api/discord/options" + (fresh ? "?refresh=1" : ""));
-        opts = o; optErr = o.error || "";
-      } catch (err) { optErr = err.message; }
-    };
-    const gearForm = g => {
-      const list = keys[g] || [];
-      const label = { shift: "Shift Logs", moderation: "Moderation Logs", loa: "Leave of Absence" }[g];
-      openForm(`${label} channels`, "Send each type to its own channel. Anything left on default uses the main channel.",
-        list.map(k => `<div class="dint-field ov-group"><label class="dint-label">${esc(k.label)}</label>
-          ${select(k.key, opts.channels, cfg.overrides[k.key] || "", "Use default channel")}</div>`).join(""),
-        "Save channels", async f => {
-          const ov = {};
-          list.forEach(k => { ov[k.key] = f.elements[k.key].value; });
-          const data = await api("/api/discord", { overrides: ov });
-          cfg = data.config; keys = data.overrideKeys; draw(); toast("Saved");
-        });
-    };
-
-    const onClick = async e => {
-      const t = e.target;
-      const clr = t.closest("[data-clear]");
-      if (clr) { const sel = root.querySelector(`select[name="${clr.dataset.clear}"]`); if (sel) sel.value = ""; return; }
-      if (t.closest("[data-refresh]")) { await load(true); if (alive) { const keep = collect(); draw(); Object.entries(keep).forEach(([k, v]) => { const el = root.querySelector(`select[name="${k}"]`); if (el && [...el.options].some(o => o.value === v)) el.value = v; }); } return; }
-      const g = t.closest("[data-gear]"); if (g) return gearForm(g.dataset.gear);
-      const sv = t.closest("[data-save]"); if (sv) save(sv);
-    };
-    root.addEventListener("click", onClick);
-    Promise.all([api("/api/discord"), load(false)]).then(([d]) => { if (!alive) return; cfg = d.config; keys = d.overrideKeys; draw(); })
-      .catch(err => { root.innerHTML = empty("alert", esc(err.message), 160); });
-    return () => { alive = false; root.removeEventListener("click", onClick); };
-  }
-
   const AFTER = {
     roles: () => {
       const list = document.getElementById("roleList"), tools = document.getElementById("headTools");
@@ -1003,9 +893,6 @@
       api("/api/roles").then(set).catch(err => { list.innerHTML = empty("alert", esc(err.message), 160); });
       return () => tools.removeEventListener("click", onTools);
     },
-    dnick: () => discordPage("nick"),
-    dchan: () => discordPage("channels"),
-    drole: () => discordPage("roles"),
     automated: () => {
       const list = document.getElementById("autoList"), tools = document.getElementById("headTools");
       const canEdit = USER_PERMS.includes("automated.manage");
@@ -2006,9 +1893,6 @@
 
   const PAGES = {
     roles: () => `<section class="panel"><div id="roleList">${empty("loading", "Loading\u2026", 160)}</div></section>`,
-    dnick: () => `<div id="dPage">${empty("loading", "Loading\u2026", 160)}</div>`,
-    dchan: () => `<div id="dPage">${empty("loading", "Loading\u2026", 160)}</div>`,
-    drole: () => `<div id="dPage">${empty("loading", "Loading\u2026", 160)}</div>`,
     automated: () => `
       <div class="q-banner">Messages only send when there is at least 1 person on shift, so factor that in when you create them.</div>
       <div class="auto-grid" id="autoList">${empty("loading", "Loading\u2026", 160)}</div>`,
@@ -2155,13 +2039,13 @@
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS.sidebar}</svg>
       </button>
     </div>` + NAV.map(g => `
-    <div class="group${g.nested ? " group-nested" : ""}">
-      ${g.nested ? `<div class="group-head">${ico(g.icon)}<span class="lbl">${g.group}</span></div>` : `<div class="group-label">${g.group}</div>`}
-      ${g.nested ? '<div class="nested">' : ""}${g.items.map(i => `
+    <div class="group">
+      <div class="group-label">${g.group}</div>
+      ${g.items.map(i => `
         <a class="item" href="#${i.id}" data-id="${i.id}" title="${i.label}">
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[i.icon || i.id]}</svg>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[i.id]}</svg>
           <span class="lbl">${i.label}</span>
-        </a>`).join("")}${g.nested ? "</div>" : ""}
+        </a>`).join("")}
     </div>`).join("") + `
     <button class="item logout" id="logout" type="button">
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS.logout}</svg>
