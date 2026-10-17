@@ -1,4 +1,4 @@
-  // ---------- CONFIG: edit these ----------
+// ---------- CONFIG: edit these ----------
   const DEFAULT_PAGE = "overview";
 
   // Simple 24x24 stroke icons
@@ -60,6 +60,7 @@
     cancelleave:'<path d="M8 2v4"/> <path d="M16 2v4"/> <rect width="18" height="18" x="3" y="4" rx="2"/> <path d="M3 10h18"/> <path d="m14 14-4 4"/> <path d="m10 14 4 4"/>',
     external:   '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/>',
     roles:      '<path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19"/> <path d="M9.586 5.586A2 2 0 0 0 8.172 5H3a1 1 0 0 0-1 1v5.172a2 2 0 0 0 .586 1.414L8.29 18.29a2.426 2.426 0 0 0 3.42 0l3.58-3.58a2.426 2.426 0 0 0 0-3.42z"/> <circle cx="6.5" cy="9.5" r=".5" fill="currentColor"/>',
+    automated:  '<path d="M10.268 21a2 2 0 0 0 3.464 0"/> <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
     sidebar:    '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path class="side-chev" d="M16 10l-2 2 2 2"/>'
   };
   ICONS.quotas = ICONS.target;
@@ -76,7 +77,8 @@
       { id: "moderations", label: "Moderations", sub: "Warnings, kicks and other actions." },
       { id: "bans",        label: "Bans",        sub: "Active and past bans." },
       { id: "serverlogs",  label: "Server logs", sub: "Join, leave, and command logs." },
-      { id: "commands",    label: "Commands",    sub: "Run commands on the server." }
+      { id: "commands",    label: "Commands",    sub: "Run commands on the server." },
+      { id: "automated",   label: "Automated messages", sub: "Messages the panel posts in game on a timer." }
     ]},
     { group: "Team", items: [
       { id: "staff",  label: "Staff",  sub: "Your staff team." },
@@ -803,6 +805,11 @@
     settings: () => ({ title: "Settings", sub: "Only owners see this page. Changes apply to everyone right away." }),
     staff: () => ({ title: "Staff", sub: `${STAFF.length} on the staff team \u00B7 ${STAFF.filter(m => isOnShift(m.name)).length} on shift` }),
     commands: () => ({ title: "Commands", sub: "Run in-game commands on your ER:LC server. ER:LC takes one command every 5 seconds." }),
+    automated: () => ({
+      title: "Automated messages",
+      sub: "Set up messages the panel posts in game on a timer.",
+      tools: USER_PERMS.includes("automated.manage") ? `<button class="btn-primary" id="autoNew" type="button">${ico("plus")}Create message</button>` : ""
+    }),
     serverlogs: () => ({
       title: "Server logs",
       sub: `Joins, leaves, kills, commands and mod calls from your ER:LC server. You can look back ${LOG_RETENTION_DAYS} days, or ${COMMAND_RETENTION_DAYS} for commands.`,
@@ -837,11 +844,12 @@
     "moderations.view": "See and log moderations", "bans.view": "See bans", "bans.remove": "Unban players", "logs.view": "See server logs", "logs.clear": "Clear server logs", "moderations.delete": "Delete moderation logs",
     "commands.run": "Run commands", "staff.view": "See the staff team", "staff.manage": "Manage staff (strikes, shifts, leave)",
     "shifts.use": "Clock in for shifts", "moderations.delete": "Delete moderation logs", "roles.assign": "Give staff roles",
-    "settings.manage": "Change settings and roles"
+    "settings.manage": "Change settings and roles",
+    "automated.manage": "Manage automated messages"
   };
   const PERM_GROUPS = [
     ["Server", ["overview.view", "players.view", "livemap.view"]],
-    ["Moderation", ["moderations.view", "moderations.delete", "bans.view", "bans.remove", "logs.view", "logs.clear", "commands.run"]],
+    ["Moderation", ["moderations.view", "moderations.delete", "bans.view", "bans.remove", "logs.view", "logs.clear", "commands.run", "automated.manage"]],
     ["Team", ["staff.view", "staff.manage", "roles.assign", "shifts.use", "settings.manage"]]
   ];
 
@@ -883,6 +891,74 @@
         try { set(await api("/api/roles/" + r.id, { action: b.dataset.a })); } catch (err) { toast(err.message); b.disabled = false; }
       });
       api("/api/roles").then(set).catch(err => { list.innerHTML = empty("alert", esc(err.message), 160); });
+      return () => tools.removeEventListener("click", onTools);
+    },
+    automated: () => {
+      const list = document.getElementById("autoList"), tools = document.getElementById("headTools");
+      const canEdit = USER_PERMS.includes("automated.manage");
+      const TYPES = { hint: "Hint", announcement: "Announcement" };
+      let items = [];
+      const every = m => fmtDur(m * 60).replace(/ 0m$/, "");
+
+      const draw = () => {
+        list.innerHTML = items.length ? items.map(a => `
+          <section class="panel auto-card">
+            <div class="panel-head"><span class="t">${esc(a.name)}</span></div>
+            <div class="auto-body">
+              <div class="auto-line"><span>Interval:</span><b>${esc(every(a.interval))}</b></div>
+              <div class="auto-line col"><span>Message:</span><p class="auto-msg">${esc(a.message)}</p></div>
+              <div class="auto-line"><span>ER:LC:</span><b>${esc(TYPES[a.type] || a.type)}</b></div>
+              ${a.minPlayers > 0 ? `<div class="auto-line"><span>Min players:</span><b>${a.minPlayers}</b></div>` : ""}
+              ${a.erlc ? "" : `<div class="auto-line"><span>Status:</span><b>Not posting</b></div>`}
+            </div>
+            ${canEdit ? `<div class="auto-acts">
+              <button class="dots-btn" type="button" data-a="edit" data-id="${a.id}" aria-label="Edit ${esc(a.name)}" title="Edit">${ico("pencil")}</button>
+              <button class="dots-btn" type="button" data-a="delete" data-id="${a.id}" aria-label="Delete ${esc(a.name)}" title="Delete">${ico("trash")}</button>
+            </div>` : ""}
+          </section>`).join("")
+          : `<div class="q-empty">${ico("automated")}<b>No automated messages yet</b><span>Create one and it posts in game on a timer.</span></div>`;
+      };
+      const set = l => { items = l; draw(); };
+
+      // same form for create and edit
+      const messageForm = (title, a, submit, path) => openForm(title, "Pick how often it posts and what it says.", `
+        <label class="field"><span>Name <em>*</em></span>
+          <input name="name" maxlength="40" value="${esc(a ? a.name : "")}" placeholder="e.g. VC Reminder" autocomplete="off"></label>
+        <label class="field"><span>Interval (minutes) <em>*</em></span>
+          <input name="interval" type="number" min="5" step="1" value="${a ? a.interval : ""}" autocomplete="off">
+          <small>How often should we send the message? The minimum interval is 5 minutes.</small></label>
+        <label class="field"><span>Message</span>
+          <textarea name="message" maxlength="300">${esc(a ? a.message : "")}</textarea></label>
+        <label class="pm"><span class="pm-text">Post message in ER:LC<small>Should the panel send this message in game</small></span>
+          <span class="switch"><input type="checkbox" name="erlc" ${!a || a.erlc ? "checked" : ""}><i></i></span></label>
+        <label class="field"><span>ER:LC Type <em>*</em></span>
+          <select name="type">${Object.entries(TYPES).map(([k, l]) => `<option value="${k}" ${a && a.type === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+        <label class="field"><span>Minimum ER:LC Players</span>
+          <input name="minPlayers" type="number" min="0" step="1" value="${a ? a.minPlayers : 0}" autocomplete="off">
+          <small>The minimum number of players required in the ER:LC server for this message to run. Set to 0 to always run.</small></label>`,
+        submit, async f => {
+          const el = f.elements;
+          const body = {
+            name: el.name.value.trim(), interval: Math.floor(+el.interval.value), message: el.message.value.trim(),
+            erlc: el.erlc.checked, type: el.type.value, minPlayers: Math.max(0, Math.floor(+el.minPlayers.value || 0))
+          };
+          if (!body.name) throw new Error("Give it a name.");
+          if (!(body.interval >= 5)) throw new Error("The interval must be at least 5 minutes.");
+          if (!body.message) throw new Error("Write the message to send.");
+          set(await api(path, body));
+        });
+
+      const onTools = e => { if (e.target.closest("#autoNew")) messageForm("Create message", null, "Create message", "/api/automated"); };
+      tools.addEventListener("click", onTools);
+      list.addEventListener("click", async e => {
+        const b = e.target.closest("[data-a]"); if (!b) return;
+        const a = items.find(x => x.id === +b.dataset.id); if (!a) return;
+        if (b.dataset.a === "edit") return messageForm(`Edit ${esc(a.name)}`, a, "Save message", "/api/automated/" + a.id);
+        if (!await ask({ title: `Delete ${a.name}?`, text: "It stops posting in game. This can't be undone.", ok: "Delete message", danger: true })) return;
+        b.disabled = true;
+        try { set(await api(`/api/automated/${a.id}/delete`, {})); } catch (err) { toast(err.message); b.disabled = false; }
+      });
+      api("/api/automated").then(set).catch(err => { list.innerHTML = empty("alert", esc(err.message), 160); });
       return () => tools.removeEventListener("click", onTools);
     },
     quotas: () => {
@@ -1817,6 +1893,9 @@
 
   const PAGES = {
     roles: () => `<section class="panel"><div id="roleList">${empty("loading", "Loading\u2026", 160)}</div></section>`,
+    automated: () => `
+      <div class="q-banner">Messages only send when there is at least 1 person on shift, so factor that in when you create them.</div>
+      <div class="auto-grid" id="autoList">${empty("loading", "Loading\u2026", 160)}</div>`,
     quotas: () => `
       <div id="qBanner"></div>
       <div class="q-grid">
