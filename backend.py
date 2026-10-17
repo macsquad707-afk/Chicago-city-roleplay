@@ -17,6 +17,7 @@ Fill in the CONFIG section below first. Secrets come from environment variables,
   SECRET_KEY, DISCORD_CLIENT_SECRET, DISCORD_BOT_TOKEN, ERLC_SERVER_KEY (optional), ERLC_GLOBAL_KEY (optional)
 """
 import base64
+import copy
 import hashlib
 import json
 import os
@@ -100,6 +101,18 @@ MOD_LOG_CHANNEL_ID = "1555751530014052402"
 MOD_LOG_ICON_URL = "https://media.discordapp.net/attachments/1558649202639376435/1558663279352614932/OSRP_LOGO.png?ex=6ad42acc&is=6ad2d94c&hm=f6687af5eb08682883ca7e328c463e43c1ce5284ce0517dc7a49cf8245de041b&=&format=webp&quality=lossless&width=384&height=384"
 MOD_TYPE_LABELS = {"warning": "Warning", "kick": "Kick", "ban": "Ban", "tempban": "Temp Ban", "bolo": "Ban BOLO", "note": "Note"}
 
+# Discord Integration pages (Nicknames, Channels, Roles). The choices are saved from the panel; nothing here needs editing.
+DISCORD_CHANNEL_KEYS = ["shift", "moderation", "loa", "reviews", "promotion", "demotion"]
+DISCORD_ROLE_KEYS = ["shift", "break", "loa"]
+# Log groups that can be split up: each type can go to its own channel instead of the group's channel.
+DISCORD_OVERRIDES = {
+    "shift": [("start", "Shift started"), ("break", "Shift break"), ("end", "Shift ended")],
+    "moderation": list(MOD_TYPE_LABELS.items()),
+    "loa": [("submitted", "Submitted"), ("result", "Approved or denied"), ("ended", "Ended")],
+}
+OVERRIDE_KEYS = {f"{g}.{k}" for g, items in DISCORD_OVERRIDES.items() for k, _ in items}
+SNOWFLAKE_RE = re.compile(r"^\d{15,25}$")
+
 # Every permission a panel role can have, with the old rank each one started at. The rank is only used once,
 # to build the first Owner/Admin/Mod/Helper roles; after that, roles are edited on the Settings page.
 SEED_PERMISSIONS = {
@@ -114,6 +127,7 @@ SEED_PERMISSIONS = {
     "moderations.delete": "admin",
     "commands.run": "mod",
     "automated.manage": "admin",
+    "discord.manage": "owner",
     "staff.view": "helper",
     "staff.manage": "admin",
     "shifts.use": "helper",
@@ -125,6 +139,7 @@ PAGE_PERMS = {
     "moderations": "moderations.view", "bans": "bans.view", "serverlogs": "logs.view",
     "commands": "commands.run", "automated": "automated.manage", "staff": "staff.view", "shifts": "shifts.use", "quotas": "shifts.use",
     "settings": "settings.manage", "roles": "settings.manage",
+    "dnick": "discord.manage", "dchan": "discord.manage", "drole": "discord.manage",
 }
 # Rank each moderation type started at (seed only, like SEED_PERMISSIONS). Logging one needs the "log.<type>" permission.
 SEED_MOD_LEVELS = {"warning": "helper", "note": "helper", "kick": "mod", "ban": "mod", "tempban": "mod", "bolo": "mod"}
@@ -334,7 +349,8 @@ def seed_roles():
 
 def display_name(member):
     u = member.get("user", {})
-    return member.get("nick") or u.get("global_name") or u.get("username") or "Unknown"
+    # the shift / LOA nickname prefix is removed, so a person's name stays the same on and off shift
+    return strip_prefixes(member.get("nick") or u.get("global_name") or u.get("username") or "Unknown")
 
 
 def avatar_url(user):
@@ -626,6 +642,7 @@ def start_background():
                 ingest_logs()
                 check_shifts_in_game()
                 run_automated_messages()
+                sync_loa()
                 if time.time() - last_prune > 3600:
                     prune_logs()
                     last_prune = time.time()
@@ -726,7 +743,8 @@ def post_mod_log_to_discord(entry, mod_discord_id):
                 "components": [{"type": 1, "components": [
                     {"type": 2, "style": 5, "label": "Manage moderation Log", "url": SITE_URL + "/panel#moderations"}]}],
             }
-            r = requests.post(f"{DISCORD_API}/channels/{MOD_LOG_CHANNEL_ID}/messages", headers=bot_headers(), json=payload, timeout=10)
+            channel = log_channel("moderation", entry["type"]) or MOD_LOG_CHANNEL_ID   # set on the Channels page; the old setting is the fallback
+            r = requests.post(f"{DISCORD_API}/channels/{channel}/messages", headers=bot_headers(), json=payload, timeout=10)
             if r.status_code not in (200, 201):
                 print("Mod log post failed:", r.status_code, r.text[:300])
         except Exception as e:
@@ -987,6 +1005,208 @@ def automated_delete(aid):
     return jsonify(automated_list())
 
 
+# ------------------------------------------------------------------------------ Discord integration
+def dcfg():
+    """Saved Discord integration settings (nickname prefixes, log channels, roles). Anything not set is blank."""
+    def load():
+        saved = rows("SELECT value FROM settings WHERE key='discord'")
+        try:
+            s = json.loads(saved[0]["value"]) if saved else {}
+        except ValueError:
+            s = {}
+        s = s if isinstance(s, dict) else {}
+        out = {"nick": dict.fromkeys(("shift", "loa"), ""), "channels": dict.fromkeys(DISCORD_CHANNEL_KEYS, ""),
+               "roles": dict.fromkeys(DISCORD_ROLE_KEYS, ""), "overrides": {}}
+        for sec in ("nick", "channels", "roles"):
+            got = s.get(sec) if isinstance(s.get(sec), dict) else {}
+            for k in out[sec]:
+                if isinstance(got.get(k), str):
+                    out[sec][k] = got[k]
+        ov = s.get("overrides")
+        if isinstance(ov, dict):
+            out["overrides"] = {k: v for k, v in ov.items() if k in OVERRIDE_KEYS and isinstance(v, str) and v}
+        return out
+    return copy.deepcopy(cached("dcfg", 5, load))
+
+
+def strip_prefixes(name):
+    """Removes the on-shift / on-LOA prefix from a nickname."""
+    c = dcfg()["nick"]
+    for p in (c["shift"], c["loa"]):
+        if p and name.startswith(p + " "):
+            return name[len(p) + 1:]
+    return name
+
+
+def log_channel(group, key=None):
+    """Channel id a log goes to: the type's own channel if one is set, otherwise the group's channel, otherwise ''."""
+    c = dcfg()
+    return (key and c["overrides"].get(f"{group}.{key}")) or c["channels"].get(group) or ""
+
+
+def discord_post(channel_id, payload):
+    """Posts a message to a Discord channel in the background. A Discord failure never breaks the panel."""
+    if not channel_id:
+        return
+
+    def work():
+        try:
+            r = requests.post(f"{DISCORD_API}/channels/{channel_id}/messages", headers=bot_headers(), json=payload, timeout=10)
+            if r.status_code not in (200, 201):
+                print("Discord post failed:", r.status_code, r.text[:200])
+        except Exception as e:
+            print("Discord post error:", repr(e)[:200])
+    threading.Thread(target=work, daemon=True).start()
+
+
+def loa_active():
+    r = rows("SELECT value FROM settings WHERE key='loa_active'")
+    try:
+        return set(json.loads(r[0]["value"])) if r else set()
+    except ValueError:
+        return set()
+
+
+def sync_member(uid):
+    """Makes someone's Discord roles and nickname match their state: on shift, on break, or on leave."""
+    try:
+        c = dcfg()
+        if not (c["nick"]["shift"] or c["nick"]["loa"] or any(c["roles"].values())):
+            return
+        shift = rows("SELECT on_break FROM shifts WHERE user_id=? AND ended IS NULL", (uid,))
+        on_break = bool(shift and shift[0]["on_break"])
+        on_loa = uid in loa_active()
+        roles = c["roles"]
+        want = {"shift": bool(shift) and not (on_break and roles["break"]), "break": bool(shift) and on_break, "loa": on_loa}
+        base = f"{DISCORD_API}/guilds/{DISCORD_GUILD_ID}/members/{uid}"
+        hdr = bot_headers("Panel shift status")
+        for key in ("shift", "break", "loa"):
+            if roles[key]:
+                r = (requests.put if want[key] else requests.delete)(f"{base}/roles/{roles[key]}", headers=hdr, timeout=10)
+                if r.status_code not in (200, 204):
+                    print("Discord role update failed:", r.status_code, r.text[:200])
+        prefix = c["nick"]["shift"] if shift else c["nick"]["loa"] if on_loa else ""
+        if c["nick"]["shift"] or c["nick"]["loa"]:
+            status, m = discord_member(uid)
+            if status == 200:
+                u = m.get("user", {})
+                default = u.get("global_name") or u.get("username") or ""
+                cur = m.get("nick") or ""
+                name = strip_prefixes(cur) or default
+                new = (prefix + " " + name)[:32] if prefix else name
+                new = None if new == default else new   # null puts back their normal Discord name
+                if (new or "") != cur:
+                    r = requests.patch(base, headers=dict(hdr, **{"Content-Type": "application/json"}), json={"nick": new}, timeout=10)
+                    if r.status_code not in (200, 204):
+                        print("Discord nickname update failed:", r.status_code, r.text[:200])
+    except Exception as e:
+        print("Discord sync error:", repr(e)[:200])
+
+
+def shift_changed(uid, ev):
+    """Tells Discord about a shift change: a message in the shift log channel, then roles and nickname.
+    ev is one of start, break, break_end, end, auto_end."""
+    titles = {"start": "Shift Started", "break": "Shift Break Started", "break_end": "Shift Break Ended",
+              "end": "Shift Ended", "auto_end": "Shift Ended (left the game)"}
+    key = {"break_end": "break", "auto_end": "end"}.get(ev, ev)
+    discord_post(log_channel("shift", key), {"embeds": [{"author": {"name": titles[ev]}, "description": f"<@{uid}>",
+                                                          "color": 16777215, "timestamp": datetime.now(timezone.utc).isoformat()}]})
+    threading.Thread(target=sync_member, args=(uid,), daemon=True).start()
+
+
+def sync_loa():
+    """Once a minute-ish: people whose approved leave has started get the LOA role and nickname; when it ends they lose them."""
+    today = datetime.now(timezone.utc).date().isoformat()
+    now_on = {r["user_id"] for r in rows("SELECT DISTINCT user_id FROM leave WHERE status='approved' AND start <= ? AND end >= ?", (today, today))}
+    prev = loa_active()
+    if now_on == prev:
+        return
+    run("INSERT INTO settings (key, value) VALUES ('loa_active', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+        (json.dumps(sorted(now_on)),))
+    for uid in now_on ^ prev:
+        sync_member(uid)
+    for uid in prev - now_on:
+        discord_post(log_channel("loa", "ended"), {"embeds": [{"author": {"name": "Leave of Absence Ended"},
+                                                                "description": f"<@{uid}>", "color": 16777215}]})
+
+
+def discord_payload():
+    return {"config": dcfg(),
+            "overrideKeys": {g: [{"key": f"{g}.{k}", "label": label} for k, label in items] for g, items in DISCORD_OVERRIDES.items()}}
+
+
+@app.get("/api/discord")
+@auth("discord.manage")
+def discord_get():
+    return jsonify(discord_payload())
+
+
+@app.post("/api/discord")
+@auth("discord.manage")
+def discord_save():
+    d = request.get_json(silent=True) or {}
+    c = dcfg()
+
+    def sect(name):
+        return d[name] if isinstance(d.get(name), dict) else {}
+    for k, v in sect("nick").items():
+        if k in c["nick"]:
+            v = " ".join(str(v).split())
+            if len(v) > 16:
+                return jsonify(error="Prefixes can be at most 16 characters."), 400
+            c["nick"][k] = v
+    for sec, label in (("channels", "channel"), ("roles", "role")):
+        for k, v in sect(sec).items():
+            if k in c[sec]:
+                v = str(v).strip()
+                if v and not SNOWFLAKE_RE.match(v):
+                    return jsonify(error=f"That {label} isn't valid."), 400
+                c[sec][k] = v
+    for k, v in sect("overrides").items():
+        if k in OVERRIDE_KEYS:
+            v = str(v).strip()
+            if v and not SNOWFLAKE_RE.match(v):
+                return jsonify(error="That channel isn't valid."), 400
+            if v:
+                c["overrides"][k] = v
+            else:
+                c["overrides"].pop(k, None)
+    run("INSERT INTO settings (key, value) VALUES ('discord', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (json.dumps(c),))
+    forget("dcfg")
+    return jsonify(discord_payload())
+
+
+@app.get("/api/discord/options")
+@auth("discord.manage")
+def discord_options():
+    """Channels and roles in the Discord server, for the dropdowns. ?refresh=1 skips the short cache."""
+    if request.args.get("refresh") == "1":
+        forget("dopts")
+
+    def fetch():
+        out = {"channels": [], "roles": [], "error": ""}
+        try:
+            r = requests.get(f"{DISCORD_API}/guilds/{DISCORD_GUILD_ID}/channels", headers=bot_headers(), timeout=10)
+            if r.status_code == 200:
+                out["channels"] = [{"id": c["id"], "name": c["name"]} for c in sorted(r.json(), key=lambda c: c.get("position", 0))
+                                   if c.get("type") in (0, 5)]   # text and announcement channels
+            else:
+                out["error"] = f"Couldn't load channels from Discord ({r.status_code})."
+            r = requests.get(f"{DISCORD_API}/guilds/{DISCORD_GUILD_ID}/roles", headers=bot_headers(), timeout=10)
+            if r.status_code == 200:
+                out["roles"] = [{"id": x["id"], "name": x["name"]} for x in sorted(r.json(), key=lambda x: -x.get("position", 0))
+                                if x["id"] != DISCORD_GUILD_ID and not x.get("managed")]
+            else:
+                out["error"] = out["error"] or f"Couldn't load roles from Discord ({r.status_code})."
+        except requests.RequestException:
+            out["error"] = "Couldn't reach Discord."
+        return out
+    out = cached("dopts", 30, fetch)
+    if out["error"]:
+        forget("dopts")   # don't remember a failure
+    return jsonify(out)
+
+
 # ------------------------------------------------------------------------------ shifts
 def in_game(nick, players):
     """True if an in-game player's Roblox username appears as a whole word in this Discord nickname."""
@@ -1024,6 +1244,7 @@ def check_shifts_in_game():
             end_shift(cur, _last_seen.pop(cur["id"]))
             run("INSERT INTO staff_events (user_id, text, by_name, at) VALUES (?,?,?,?)",
                 (cur["user_id"], "Shift ended automatically (left the game)", "Panel", now))
+            shift_changed(cur["user_id"], "auto_end")
     for sid in set(_last_seen) - {r["id"] for r in active}:
         _last_seen.pop(sid, None)
 
@@ -1069,6 +1290,15 @@ def shifts_action(action):
         end_shift(cur, now)
     elif action not in ("start", "break", "end"):
         return jsonify(error="Unknown action."), 400
+    ev = None
+    if action == "start" and not cur:
+        ev = "start"
+    elif action == "break" and cur:
+        ev = "break_end" if cur["on_break"] else "break"
+    elif action == "end" and cur:
+        ev = "end"
+    if ev:
+        shift_changed(u["id"], ev)
     return jsonify(shifts_state())
 
 
@@ -1201,6 +1431,13 @@ def staff_roles(uid):
             c.commit()
         names = [roles[i]["name"] for i in sorted(want, key=lambda i: -roles[i]["position"])]
         staff_event(uid, "Roles set to " + ", ".join(names) if names else "All roles removed")
+        new_power = max((roles[i]["position"] for i in want), default=0)
+        if uid not in OWNER_IDS and new_power != m["power"]:   # their top role moved up or down
+            up = new_power > m["power"]
+            new_top = roles[max(want, key=lambda i: roles[i]["position"])]["name"] if want else "No role"
+            discord_post(log_channel("promotion" if up else "demotion"), {"embeds": [{
+                "author": {"name": "Staff Promotion" if up else "Staff Demotion"}, "color": 16777215,
+                "description": f"<@{uid}> was {'promoted' if up else 'demoted'} from **{top_role(m, roles)[0]}** to **{new_top}** by <@{viewer['id']}>."}]})
     return jsonify(staff_list(viewer))
 
 
@@ -1396,6 +1633,9 @@ def leave_request():
         return jsonify(error="You already have 3 requests waiting. Wait for a decision first."), 400
     run("INSERT INTO leave (user_id, user_name, start, end, reason, status, at) VALUES (?,?,?,?,?,'pending',?)",
         (g.user["id"], g.user["name"], start.isoformat(), end.isoformat(), reason, now_ms()))
+    discord_post(log_channel("loa", "submitted"), {"embeds": [{
+        "author": {"name": "Leave of Absence Submitted"}, "color": 16777215, "description": f"<@{g.user['id']}> requested leave.",
+        "fields": [{"name": "Dates", "value": f"{start.isoformat()} to {end.isoformat()}"}, {"name": "Reason", "value": reason}]}]})
     return jsonify(ok=True)
 
 
@@ -1422,6 +1662,9 @@ def leave_action(lid):
         status = "approved" if action == "approve" else "denied"
         run("UPDATE leave SET status=?, decided_by=? WHERE id=?", (status, g.user["name"], lid))
         staff_event(r["user_id"], f"Leave {span} {status}")
+        discord_post(log_channel("loa", "result"), {"embeds": [{
+            "author": {"name": f"Leave of Absence {status.capitalize()}"}, "color": 16777215,
+            "description": f"<@{r['user_id']}>'s leave ({span}) was {status} by <@{g.user['id']}>."}]})
     else:
         return jsonify(error="Unknown action."), 400
     return jsonify(ok=True)
@@ -1707,10 +1950,16 @@ def home_review_post():
         stars = 5
     if len(text) < 3:
         return jsonify(error="Write a bit more."), 400
+    existed = rows("SELECT 1 FROM reviews WHERE user_id=?", (u["id"],))
     run("""INSERT INTO reviews (user_id, name, avatar, stars, text, at) VALUES (?,?,?,?,?,?)
            ON CONFLICT(user_id) DO UPDATE SET name=excluded.name, avatar=excluded.avatar,
            stars=excluded.stars, text=excluded.text, at=excluded.at""",
         (u["id"], u["username"], u.get("avatar", ""), stars, text, now_ms()))
+    if not existed:   # only new reviews are announced, not edits
+        discord_post(log_channel("reviews"), {"embeds": [{
+            "author": {"name": "New Review"}, "color": 16777215, "description": text,
+            "fields": [{"name": "Rating", "value": "\u2605" * stars + "\u2606" * (5 - stars), "inline": True},
+                       {"name": "From", "value": u["username"] or "Player", "inline": True}]}]})
     return jsonify(ok=True)
 
 
