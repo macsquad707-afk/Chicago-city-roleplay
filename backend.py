@@ -91,6 +91,10 @@ BLOCKED_COMMANDS = [":admin", ":unadmin", ":mod", ":unmod", ":helper", ":unhelpe
 # When someone logs a Kick, Ban, or Warning (with the PM switch on), also send it to the game.
 AUTO_ERLC_ACTIONS = True
 
+# Automated messages (Automated messages page): the ER:LC command each type is sent with, and the shortest interval allowed.
+AUTOMATED_TYPES = {"hint": ":h", "announcement": ":m"}
+AUTOMATED_MIN_MINUTES = 5
+
 # Every moderation logged on the panel is also posted to this Discord channel by the bot.
 MOD_LOG_CHANNEL_ID = "1555751530014052402"
 MOD_LOG_ICON_URL = "https://media.discordapp.net/attachments/1558649202639376435/1558663279352614932/OSRP_LOGO.png?ex=6ad42acc&is=6ad2d94c&hm=f6687af5eb08682883ca7e328c463e43c1ce5284ce0517dc7a49cf8245de041b&=&format=webp&quality=lossless&width=384&height=384"
@@ -109,6 +113,7 @@ SEED_PERMISSIONS = {
     "logs.clear": "owner",
     "moderations.delete": "admin",
     "commands.run": "mod",
+    "automated.manage": "admin",
     "staff.view": "helper",
     "staff.manage": "admin",
     "shifts.use": "helper",
@@ -118,7 +123,7 @@ SEED_PERMISSIONS = {
 PAGE_PERMS = {
     "overview": "overview.view", "players": "players.view", "livemap": "livemap.view",
     "moderations": "moderations.view", "bans": "bans.view", "serverlogs": "logs.view",
-    "commands": "commands.run", "staff": "staff.view", "shifts": "shifts.use", "quotas": "shifts.use",
+    "commands": "commands.run", "automated": "automated.manage", "staff": "staff.view", "shifts": "shifts.use", "quotas": "shifts.use",
     "settings": "settings.manage", "roles": "settings.manage",
 }
 # Rank each moderation type started at (seed only, like SEED_PERMISSIONS). Logging one needs the "log.<type>" permission.
@@ -205,6 +210,9 @@ def init_db():
         CREATE TABLE IF NOT EXISTS leave (
             id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, user_name TEXT, start TEXT, end TEXT, reason TEXT,
             status TEXT, decided_by TEXT, at INTEGER);
+        CREATE TABLE IF NOT EXISTS automated_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, interval_min INTEGER, message TEXT, erlc INTEGER DEFAULT 1,
+            type TEXT, min_players INTEGER DEFAULT 0, last_sent INTEGER DEFAULT 0, created_at INTEGER);
         """)
         # columns added after the first release; ALTER fails harmlessly once they exist
         for col in ("adjust_ms INTEGER DEFAULT 0", "manual INTEGER DEFAULT 0", "revoked_by TEXT"):
@@ -506,8 +514,9 @@ def split_player(s):
 _cmd_lock, _last_cmd = threading.Lock(), 0.0
 
 
-def send_erlc_command(cmd, who):
-    """(ok, error). Records the attempt in the history unless we're just waiting out the cooldown."""
+def send_erlc_command(cmd, who, record=True):
+    """(ok, error). Records the attempt in the history unless we're just waiting out the cooldown.
+    record=False keeps automated messages out of the Commands history so they don't bury what staff ran."""
     global _last_cmd
     if not ERLC_SERVER_KEY:
         return False, "The ER:LC server key isn't set yet."
@@ -524,7 +533,8 @@ def send_erlc_command(cmd, who):
             err = erlc_error(r)
     except requests.RequestException:
         err = "Couldn't reach ER:LC."
-    run("INSERT INTO commands (command, ok, error, user_name, at) VALUES (?,?,?,?,?)", (cmd, int(ok), err, who, now_ms()))
+    if record:
+        run("INSERT INTO commands (command, ok, error, user_name, at) VALUES (?,?,?,?,?)", (cmd, int(ok), err, who, now_ms()))
     return ok, err
 
 
@@ -571,6 +581,35 @@ def prune_logs():
         (now - COMMAND_RETENTION_DAYS * 86400000, now - LOG_RETENTION_DAYS * 86400000))
 
 
+def run_automated_messages():
+    """Sends the next automated message that is due. Only one goes out per pass, so ER:LC's one-command-per-5-seconds
+    limit is respected. Nothing is sent unless at least one person is on shift and the server has enough players."""
+    if not ERLC_SERVER_KEY:
+        return
+    now = now_ms()
+    due = [m for m in rows("SELECT * FROM automated_messages WHERE erlc=1 ORDER BY last_sent")
+           if now - (m["last_sent"] or 0) >= m["interval_min"] * 60000]
+    if not due or not rows("SELECT 1 FROM shifts WHERE ended IS NULL LIMIT 1"):
+        return
+    d, err = erlc_snapshot()
+    if err or not isinstance(d, dict):
+        return
+    players = d.get("CurrentPlayers", len(d.get("Players") or []))
+    for m in due:
+        if players < (m["min_players"] or 0):
+            continue   # try again next pass; it goes out as soon as enough players are in
+        prefix = AUTOMATED_TYPES.get(m["type"])
+        if not prefix:
+            continue
+        ok, err = send_erlc_command(f"{prefix} {m['message']}", "Automated", record=False)
+        if not ok and err.startswith("ER:LC takes one command"):
+            return   # still in the cooldown after another command; retry on the next pass
+        run("UPDATE automated_messages SET last_sent=? WHERE id=?", (now_ms(), m["id"]))
+        if not ok:
+            print(f"Automated message '{m['name']}' failed:", err)
+        return
+
+
 _bg_started = False
 
 
@@ -586,6 +625,7 @@ def start_background():
             try:
                 ingest_logs()
                 check_shifts_in_game()
+                run_automated_messages()
                 if time.time() - last_prune > 3600:
                     prune_logs()
                     last_prune = time.time()
@@ -874,6 +914,77 @@ def commands_run():
         return jsonify(ok=False, error="That command can only be run in game."), 403
     ok, err = send_erlc_command(cmd, g.user["name"])
     return jsonify(ok=ok, error=err)
+
+
+# ------------------------------------------------------------------------------ automated messages
+def automated_list():
+    return [{"id": r["id"], "name": r["name"], "interval": r["interval_min"], "message": r["message"],
+             "erlc": bool(r["erlc"]), "type": r["type"], "minPlayers": r["min_players"] or 0}
+            for r in rows("SELECT * FROM automated_messages ORDER BY id")]
+
+
+def read_automated(d):
+    """(fields, None) or (None, error). The message is kept on one line, since ER:LC commands are one line."""
+    name = " ".join(str(d.get("name", "")).split())[:40]
+    message = " ".join(str(d.get("message", "")).split())[:300]
+    try:
+        interval = int(d.get("interval"))
+    except (TypeError, ValueError):
+        interval = 0
+    try:
+        min_players = int(d.get("minPlayers") or 0)
+    except (TypeError, ValueError):
+        min_players = -1
+    if not name:
+        return None, "Give it a name."
+    if interval < AUTOMATED_MIN_MINUTES or interval > 10080:
+        return None, f"The interval must be from {AUTOMATED_MIN_MINUTES} minutes to 10080 (one week)."
+    if not message:
+        return None, "Write the message to send."
+    if d.get("type") not in AUTOMATED_TYPES:
+        return None, "Pick an ER:LC type."
+    if not 0 <= min_players <= 100:
+        return None, "Minimum players must be from 0 to 100."
+    return {"name": name, "interval": interval, "message": message, "erlc": int(bool(d.get("erlc"))),
+            "type": d["type"], "min_players": min_players}, None
+
+
+@app.get("/api/automated")
+@auth("automated.manage")
+def automated_get():
+    return jsonify(automated_list())
+
+
+@app.post("/api/automated")
+@auth("automated.manage")
+def automated_create():
+    f, err = read_automated(request.get_json(silent=True) or {})
+    if err:
+        return jsonify(error=err), 400
+    now = now_ms()   # last_sent starts now, so the first message goes out one interval from now
+    run("INSERT INTO automated_messages (name, interval_min, message, erlc, type, min_players, last_sent, created_at) VALUES (?,?,?,?,?,?,?,?)",
+        (f["name"], f["interval"], f["message"], f["erlc"], f["type"], f["min_players"], now, now))
+    return jsonify(automated_list())
+
+
+@app.post("/api/automated/<int:aid>")
+@auth("automated.manage")
+def automated_update(aid):
+    if not rows("SELECT id FROM automated_messages WHERE id=?", (aid,)):
+        return jsonify(error="That message doesn't exist any more."), 404
+    f, err = read_automated(request.get_json(silent=True) or {})
+    if err:
+        return jsonify(error=err), 400
+    run("UPDATE automated_messages SET name=?, interval_min=?, message=?, erlc=?, type=?, min_players=? WHERE id=?",
+        (f["name"], f["interval"], f["message"], f["erlc"], f["type"], f["min_players"], aid))
+    return jsonify(automated_list())
+
+
+@app.post("/api/automated/<int:aid>/delete")
+@auth("automated.manage")
+def automated_delete(aid):
+    run("DELETE FROM automated_messages WHERE id=?", (aid,))
+    return jsonify(automated_list())
 
 
 # ------------------------------------------------------------------------------ shifts
