@@ -91,6 +91,11 @@ BLOCKED_COMMANDS = [":admin", ":unadmin", ":mod", ":unmod", ":helper", ":unhelpe
 # When someone logs a Kick, Ban, or Warning (with the PM switch on), also send it to the game.
 AUTO_ERLC_ACTIONS = True
 
+# Every moderation logged on the panel is also posted to this Discord channel by the bot.
+MOD_LOG_CHANNEL_ID = "1555751530014052402"
+MOD_LOG_ICON_URL = "https://media.discordapp.net/attachments/1558649202639376435/1558663279352614932/OSRP_LOGO.png?ex=6ad42acc&is=6ad2d94c&hm=f6687af5eb08682883ca7e328c463e43c1ce5284ce0517dc7a49cf8245de041b&=&format=webp&quality=lossless&width=384&height=384"
+MOD_TYPE_LABELS = {"warning": "Warning", "kick": "Kick", "ban": "Ban", "tempban": "Temp Ban", "bolo": "Ban BOLO", "note": "Note"}
+
 # Every permission a panel role can have, with the old rank each one started at. The rank is only used once,
 # to build the first Owner/Admin/Mod/Helper roles; after that, roles are edited on the Settings page.
 SEED_PERMISSIONS = {
@@ -636,6 +641,59 @@ def new_case_id():
     return "MOD-%s-%s-%s" % (d.strftime("%Y%m%d"), d.strftime("%H%M%S"), "".join(secrets.choice(chars) for _ in range(4)))
 
 
+def roblox_id_for(name):
+    """Roblox user id for a username, or None. Shares the cache with the avatar lookup."""
+    def fetch():
+        try:
+            r = requests.post("https://users.roblox.com/v1/usernames/users", timeout=10,
+                              json={"usernames": [name], "excludeBannedUsers": False})
+            uid = ((r.json().get("data") or [{}])[0]).get("id")
+        except (requests.RequestException, ValueError, AttributeError):
+            return None
+        return uid if isinstance(uid, int) else None
+    uid = cached(f"robloxid:{name.lower()}", 86400, fetch)
+    if not uid:
+        forget(f"robloxid:{name.lower()}")
+    return uid
+
+
+def post_mod_log_to_discord(entry, mod_discord_id):
+    """Posts the new moderation log to the Discord channel. Runs in the background so the panel isn't slowed down,
+    and a Discord failure never breaks logging."""
+    def work():
+        try:
+            prev = rows("SELECT COUNT(*) AS n FROM moderations WHERE LOWER(user)=LOWER(?) AND id!=? AND type!='note'",
+                        (entry["user"], entry["id"]))[0]["n"]
+            rid = roblox_id_for(entry["user"])
+            details = []
+            if entry["duration"]:
+                details.append(f"**Duration:** {entry['duration']}")
+            if entry["evidence"]:
+                details.append(f"**Evidence:** {entry['evidence']}")
+            payload = {
+                "embeds": [{
+                    "description": f"Log created by <@{mod_discord_id}>",
+                    "color": 16777215,
+                    "author": {"name": "Moderation Log Created", "icon_url": MOD_LOG_ICON_URL},
+                    "fields": [
+                        {"name": "Moderation Type", "value": MOD_TYPE_LABELS.get(entry["type"], entry["type"]), "inline": False},
+                        {"name": "Roblox User", "value": f"{entry['user']} ({rid or 'ID not found'})", "inline": False},
+                        {"name": "Previous Punishments", "value": str(prev), "inline": False},
+                        {"name": "Reason", "value": entry["reason"], "inline": False},
+                        {"name": "Description", "value": "\n".join(details) or "No extra details.", "inline": False},
+                    ],
+                }],
+                "components": [{"type": 1, "components": [
+                    {"type": 2, "style": 5, "label": "Manage moderation Log", "url": SITE_URL + "/panel#moderations"}]}],
+            }
+            r = requests.post(f"{DISCORD_API}/channels/{MOD_LOG_CHANNEL_ID}/messages", headers=bot_headers(), json=payload, timeout=10)
+            if r.status_code not in (200, 201):
+                print("Mod log post failed:", r.status_code, r.text[:300])
+        except Exception as e:
+            print("Mod log post error:", repr(e)[:300])
+    threading.Thread(target=work, daemon=True).start()
+
+
 @app.get("/api/moderations")
 @auth("moderations.view")
 def moderations_list():
@@ -693,6 +751,7 @@ def moderations_create():
         erlc = {"sent": True, "ok": ok, "error": err}
         forget("server")
         forget("bans")
+    post_mod_log_to_discord(entry, g.user["id"])
     return jsonify(entry=entry, erlc=erlc)
 
 
