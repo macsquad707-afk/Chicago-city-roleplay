@@ -68,9 +68,9 @@ OWNER_IDS = ["1374931077801709669", "1498514468252942436", "1536879503421345932"
 # Roblox verification (the /verify page). In the Roblox Creator Dashboard (OAuth 2.0 app), add SITE_URL + "/verify/callback"
 # as a redirect URL and use the scopes "openid" and "profile". Put ROBLOX_CLIENT_SECRET and SUPABASE_SECRET_KEY in .env.
 ROBLOX_CLIENT_ID = "4264543479636622924"   # your Roblox OAuth app's client ID
-ROBLOX_CLIENT_SECRET = os.environ.get("ROBLOX_CLIENT_SECRET", "")
+ROBLOX_CLIENT_SECRET = os.environ.get("ROBLOX_CLIENT_SECRET", "RBX-hUxbCZbO2Uu8EqF6fHcB8zuH4qdSdtghdvr3ofIF-rKu5U3Gyr6N_H-xfg3IGSy_")
 SUPABASE_URL = "https://oyklenlxfczmdihruqnl.supabase.co"   # Project Settings > API
-SUPABASE_KEY = os.environ.get("SUPABASE_SECRET_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")   # secret key: backend only, never put it in a web page
+SUPABASE_KEY = os.environ.get("sb_secret_NEMyyp_a1BWIE2SHTyhsQg_qdgUQrk8") or os.environ.get("SUPABASE_SERVICE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95a2xlbmx4ZmN6bWRpaHJ1cW5sIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTgwMDY1OSwiZXhwIjoyMTA3Mzc2NjU5fQ.NFKUDnWGgo3Ssk89uNdz9M_4KacWdHg1Nfd9rKaxU2Y")   # secret key: backend only, never put it in a web page
 VERIFIED_ROLE_ID = "1555751134549778553"                     # Discord role given on verify (leave empty to skip)
 UNVERIFIED_ROLE_ID = "1555769269952712744"                   # Discord role removed on verify (leave empty to skip)
 SET_NICKNAME_TO_ROBLOX = True             # also set their server nickname to their Roblox username
