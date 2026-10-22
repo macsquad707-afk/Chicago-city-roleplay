@@ -1,0 +1,20 @@
+*{box-sizing:border-box;margin:0;padding:0}
+:root{color-scheme:dark}
+body{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px;color:#fff;font-family:'Poppins',system-ui,sans-serif;
+  background:radial-gradient(800px 600px at 0% 0%,#1d4166,transparent 70%),#0a1424}
+.card{width:100%;max-width:420px;background:#0f2038;border:1px solid #1b2f4d;border-radius:22px;padding:40px 40px 36px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.check{width:80px;height:80px;margin:0 auto 22px;border:2px solid #4a9eed;border-radius:50%;display:grid;place-items:center;color:#4a9eed}
+.check svg{width:34px;height:34px}
+.k{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#4a9eed}
+h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:8px 0 14px}
+.msg{font-size:14px;color:#c4cfe0}
+.msg b{color:#7cb7f5;font-weight:500}
+.user{margin:28px 0 24px;padding-bottom:24px;border-bottom:1px solid #1b2f4d}
+.user h2{font-size:26px;font-weight:800;margin-top:8px;word-break:break-all}
+.ids{text-align:left;font-size:12px;color:#8fa3c0;display:grid;gap:6px;margin-bottom:22px}
+.ids b{color:#fff;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:10px;background:#22344f;border-radius:12px;padding:12px 22px;font-weight:700;font-size:14px;color:#fff;text-decoration:none}
+.btn:hover{background:#2b4263}
+.btn:focus-visible{outline:2px solid #4a9eed;outline-offset:3px}
+.btn svg{width:18px;height:18px;fill:currentColor}
+.left{text-align:left}
