@@ -1,6 +1,6 @@
 /* ================= CONFIG: edit these ================= */
 const SITE_NAME = "Chicago City Roleplay";
-const DISCORD_INVITE = "https://discord.gg/yourinvite";
+const DISCORD_INVITE = "https://discord.gg/chicagorpvc";
 const ROBLOX_START_URL = "/verify/start";   // backend route that signs them in with Discord, then Roblox
 const SITE_LOGO = "/logo.webp";
 /* ====================================================== */
