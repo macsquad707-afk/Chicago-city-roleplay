@@ -5,5 +5,6 @@ fetch('/api/verify/me', {credentials: 'include'})
     document.getElementById('rid').textContent = v.roblox_id || '-';
     document.getElementById('did').textContent = v.discord_id || '-';
     document.getElementById('back').href = v.guild_url;
+    document.getElementById('ids').removeAttribute('aria-busy');
   })
   .catch(() => { location.href = '/verify'; });

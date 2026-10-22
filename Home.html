@@ -3,173 +3,202 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ohio State Roleplay</title>
-<link rel="icon" id="favicon" href="">
+<meta name="theme-color" content="#ffffff">
+<title>Chicago City Roleplay</title>
+<link rel="icon" id="favicon" href="/logo.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#000;--card:#090b11;--line:#16203d;--blue:#2563eb;--text:#fff;--muted:#8a93a8;--hero:#04060d}
+/* Chicago flag palette: white field, sky-blue bands, red six-pointed stars. */
+:root{
+  color-scheme:light;
+  --white:#fff; --sky:#41b6e6; --red:#e4002b; --ink:#14212b; --steel:#5b6770;
+  --line:#dde4ea; --mist:#f3f6f8;
+  --band:clamp(28px,6vw,64px);
+  font-family:'Archivo',system-ui,sans-serif;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;scroll-padding-top:70px}
-body{background:var(--bg);color:var(--text);font-family:'Poppins',system-ui,sans-serif;line-height:1.5}
-a{color:inherit;text-decoration:none}
-.wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+html{scroll-behavior:smooth;scroll-padding-top:72px;-webkit-tap-highlight-color:transparent}
+body{background:var(--white);color:var(--ink);line-height:1.55;font-size:16px;touch-action:manipulation}
+a{color:inherit}
+img{display:block}
+:focus-visible{outline:3px solid var(--sky);outline-offset:3px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.hidden{display:none!important}
+.skip{position:absolute;left:12px;top:-60px;z-index:30;background:var(--ink);color:#fff;padding:10px 16px;font-weight:600;text-decoration:none}
+.skip:focus{top:12px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* buttons: ink by default, red for the one thing we want people to do */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:0 20px;border:2px solid var(--ink);border-radius:4px;
+  background:var(--white);color:var(--ink);font:600 15px/1 'Archivo',sans-serif;text-decoration:none;cursor:pointer;transition:background-color .15s,color .15s,border-color .15s}
+.btn:hover{background:var(--ink);color:var(--white)}
+.btn.solid{background:var(--ink);color:var(--white)}
+.btn.solid:hover{background:#26394a;border-color:#26394a}
+.btn.red{background:var(--red);border-color:var(--red);color:var(--white)}
+.btn.red:hover{background:#b80023;border-color:#b80023}
+.btn:disabled{opacity:.6;cursor:default}
+.btn svg{width:18px;height:18px;fill:currentColor;flex:none}
 
 /* nav */
-nav{position:sticky;top:0;z-index:20;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);border-bottom:1px solid #111}
-nav .wrap{display:flex;align-items:center;justify-content:space-between;height:56px;gap:16px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;white-space:nowrap}
-.brand img{width:34px;height:34px;object-fit:contain}
-.links{display:flex;align-items:center;gap:26px;font-size:14px;color:#c4cad8}
-.links a:hover{color:#fff}
-.userbox{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600}
+nav{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;text-decoration:none;white-space:nowrap}
+.brand img{width:36px;height:36px;object-fit:contain}
+.links{display:flex;align-items:center;gap:24px;font-size:15px}
+.links>a{text-decoration:none;color:var(--steel);padding:6px 0;border-bottom:2px solid transparent}
+.links>a:hover{color:var(--ink);border-bottom-color:var(--sky)}
+#authArea{display:flex;align-items:center}
+.userbox{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600}
 .userbox img{width:30px;height:30px;border-radius:50%}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:8px;font:600 13px 'Poppins',sans-serif;border:1px solid var(--line);background:transparent;color:#fff;cursor:pointer;transition:border-color .15s,background .15s}
-.btn:hover{border-color:var(--blue)}
-.btn.primary{background:var(--blue);border-color:var(--blue)}
-.btn.primary:hover{background:#1d4fd8}
-.btn svg{width:16px;height:16px;fill:currentColor}
-.hidden{display:none!important}
-.menu{display:none;background:none;border:0;color:#fff;font-size:22px;cursor:pointer}
+.userbox .btn{min-height:36px;padding:0 12px;font-size:14px;border-width:1px}
+.menu{display:none;min-width:44px;min-height:44px;background:none;border:0;font-size:24px;color:var(--ink);cursor:pointer}
 
-/* hero */
-.hero{min-height:calc(100vh - 56px);display:flex;align-items:center;background:
-  radial-gradient(900px 500px at 85% 30%,rgba(37,99,235,.22),transparent 70%),var(--hero);position:relative;overflow:hidden}
-.hero::before{content:"";position:absolute;inset:0;background-image:var(--hero-img,none);background-size:cover;background-position:center;opacity:.22}
-.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#04060d 25%,transparent 100%)}
-.hero .wrap{position:relative;z-index:1;width:100%}
-h1{font-size:clamp(48px,9vw,112px);font-weight:800;line-height:.95;letter-spacing:-.04em;text-shadow:0 0 40px rgba(120,150,255,.35)}
-h1 i{display:inline-block;width:.24em;height:.24em;background:var(--blue);margin-left:.12em}
-.tag{display:flex;align-items:center;gap:14px;margin:26px 0 28px;font-size:clamp(18px,2.4vw,30px);color:#d5d9e6;flex-wrap:wrap}
-.chip{background:#f4efe3;color:var(--blue);font-weight:700;padding:2px 18px;transform:rotate(-1.5deg);clip-path:polygon(0 8%,4% 0,12% 6%,22% 0,34% 5%,48% 0,60% 6%,74% 0,88% 5%,100% 0,98% 50%,100% 94%,86% 100%,70% 95%,56% 100%,40% 94%,24% 100%,10% 95%,0 100%,2% 50%)}
+/* hero: the flag itself */
+.hero{display:grid;grid-template-rows:var(--band) 1fr var(--band);min-height:calc(100vh - 64px);min-height:calc(100dvh - 64px)}
+.hero::before,.hero::after{content:"";background:var(--sky)}
+.field{align-self:center;padding-top:clamp(40px,7vh,80px);padding-bottom:clamp(40px,7vh,80px)}
+h1{font-stretch:68%;font-weight:850;font-size:clamp(56px,12.5vw,168px);line-height:.86;letter-spacing:-.01em;text-transform:uppercase;text-wrap:balance}
+.stars{display:flex;gap:clamp(14px,3vw,36px);margin:clamp(22px,4vw,40px) 0}
+.stars svg{width:clamp(34px,6vw,64px);height:auto;fill:var(--red)}
+.sub{font-size:clamp(18px,2.2vw,24px);color:var(--steel);max-width:34ch;margin-bottom:28px}
 .cta{display:flex;gap:12px;flex-wrap:wrap}
-.cta .btn{padding:11px 22px;font-size:14px}
+.cta .btn{min-height:52px;padding:0 28px;font-size:17px}
 
 /* sections */
-section{padding:96px 0;border-top:1px solid #0d0f16}
-h2{font-size:clamp(36px,6vw,64px);font-weight:800;letter-spacing:-.035em;line-height:1}
-h2 i{color:var(--blue);font-style:normal}
-.rule{height:1px;background:#161922;margin:26px 0 34px}
-.row{display:grid;grid-template-columns:4fr 7fr;gap:48px;align-items:center;margin-bottom:72px}
-.row:last-child{margin-bottom:0}
-.row.flip{grid-template-columns:7fr 4fr}
+section{padding:clamp(64px,10vw,112px) 0}
+h2{font-stretch:75%;font-weight:800;font-size:clamp(40px,6vw,72px);line-height:.95;text-transform:uppercase;text-wrap:balance;margin-bottom:clamp(28px,4vw,48px)}
+.rows{display:grid;gap:clamp(48px,7vw,88px)}
+.row{display:grid;grid-template-columns:5fr 7fr;gap:clamp(24px,5vw,64px);align-items:center}
+.row.flip{grid-template-columns:7fr 5fr}
 .row.flip .pic{order:-1}
-.row h3{font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-.03em;line-height:1.1}
-.row .sub{color:var(--muted);margin:14px 0 22px;font-size:16px}
-.row ul{list-style:none;display:grid;gap:12px}
-.row li{display:flex;align-items:center;gap:12px;font-size:15px;font-weight:500}
-.row li::before{content:"";width:8px;height:8px;background:var(--blue);flex:none}
-.pic img{display:block;width:100%;aspect-ratio:2/1;object-fit:cover;border-radius:20px;border:1px solid var(--line)}
-@media(max-width:820px){.row,.row.flip{grid-template-columns:1fr;gap:24px}.row.flip .pic{order:0}}
+.row h3{font-stretch:85%;font-weight:750;font-size:clamp(26px,3.4vw,36px);line-height:1.1;text-wrap:balance}
+.row .lead{color:var(--steel);font-size:18px;margin:12px 0 20px;max-width:40ch}
+.row ul{list-style:none;display:grid;gap:10px}
+.row li{padding-left:22px;position:relative;font-weight:500}
+.row li::before{content:"";position:absolute;left:0;top:.6em;width:10px;height:4px;background:var(--sky)}
+.pic img{width:100%;height:auto;aspect-ratio:2/1;object-fit:cover;border-radius:4px}
+@media(max-width:820px){.row,.row.flip{grid-template-columns:1fr}.row.flip .pic{order:0}}
 
 /* reviews */
-.reviews{background:#05060a}
-.rhead{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap}
-.marquee{overflow-x:auto;margin-top:34px;padding-bottom:14px;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:#1c2547 transparent;cursor:grab}
-.marquee.drag{cursor:grabbing;scroll-snap-type:none;user-select:none}
-.track{display:flex;gap:14px;width:max-content;padding:0 max(24px,calc((100vw - 1040px)/2 + 24px))}
+.reviews{background:var(--mist)}
+.rhead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.rhead h2{margin-bottom:0}
 .arrows{display:flex;gap:8px}
-.arrows .btn{padding:6px 14px;font-size:20px;line-height:1}
-.rev{scroll-snap-align:start;width:250px;min-height:116px;background:#0b0d14;border:1px solid #171b29;border-radius:14px;padding:14px 16px;flex:none}
-.rev b{font-size:13px}
-.stars{color:var(--blue);font-size:10px;letter-spacing:2px;margin:2px 0 8px}
-.rev p{font-size:13px;color:#d3d8e5}
-.loved{text-align:center;margin-top:44px;font-size:32px;font-weight:500;color:var(--muted)}
-.loved b{color:#fff;font-weight:700}
-.form{margin-top:34px;max-width:560px;display:grid;gap:12px}
-.form textarea{width:100%;min-height:90px;resize:vertical;background:var(--card);border:1px solid var(--line);border-radius:12px;color:#fff;padding:12px 14px;font:14px 'Poppins',sans-serif}
-.form textarea:focus{outline:2px solid var(--blue);outline-offset:1px}
-.rate{display:flex;gap:4px}
-.rate button{background:none;border:0;font-size:24px;color:#2a3150;cursor:pointer;line-height:1}
-.rate button.on{color:var(--blue)}
-.note{color:var(--muted);font-size:13px}
+.arrows .btn{width:44px;padding:0;font-size:22px}
+.strip{overflow-x:auto;margin-top:clamp(24px,4vw,40px);padding-bottom:16px;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:#c3ccd4 transparent;cursor:grab;overscroll-behavior-x:contain}
+.strip.drag{cursor:grabbing;scroll-snap-type:none;user-select:none}
+.track .note{white-space:normal;max-width:calc(100vw - 48px)}
+.track{display:flex;gap:16px;width:max-content;padding:0 max(24px,calc((100vw - 1080px)/2 + 24px))}
+.rev{scroll-snap-align:start;width:280px;background:var(--white);border:1px solid var(--line);border-radius:4px;padding:18px 20px;flex:none}
+.rev b{display:block;font-weight:700;overflow-wrap:anywhere}
+.rating{color:var(--red);letter-spacing:2px;font-size:13px;margin:2px 0 8px}
+.rev p{color:#33424d;overflow-wrap:anywhere}
+.form{margin-top:clamp(32px,5vw,56px);max-width:560px;display:grid;gap:12px}
+.form label{font-weight:700}
+.form textarea{width:100%;min-height:110px;resize:vertical;background:var(--white);border:1px solid #b9c4cd;border-radius:4px;color:var(--ink);padding:12px 14px;font:16px/1.5 'Archivo',sans-serif}
+.form textarea:focus-visible{outline:3px solid var(--sky);outline-offset:0;border-color:var(--ink)}
+.rate{display:flex;gap:2px}
+.rate button{min-width:40px;min-height:40px;background:none;border:0;font-size:28px;line-height:1;color:#c3ccd4;cursor:pointer}
+.rate button.on{color:var(--red)}
+.post{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.note{color:var(--steel);font-size:15px}
+#reviewLogin{margin-top:32px}
 
 /* team */
-.team{background:#000}
-.tgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
-.member{display:flex;align-items:center;gap:22px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px}
-.member img{width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid var(--line);background:#10152a;flex:none}
-.member h3{font-size:18px;font-weight:700}
-.member span{display:block;color:var(--muted);font-size:13px;margin-bottom:10px}
-footer{padding:30px 0;text-align:center;color:#555c70;font-size:13px;border-top:1px solid #0d0f16}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.member{display:flex;align-items:center;gap:20px;border:1px solid var(--line);border-radius:4px;padding:22px}
+.member img,.initial{width:72px;height:72px;border-radius:50%;object-fit:cover;background:var(--mist);flex:none}
+.member .initial{display:grid;place-items:center;margin:0;font-stretch:75%;font-weight:800;font-size:30px;color:var(--steel)}
+.member .initial[hidden]{display:none}
+.member h3{font-size:19px;font-weight:700;overflow-wrap:anywhere}
+.member span{display:block;color:var(--steel);font-size:14px;margin-bottom:10px}
+.member .btn{min-height:36px;padding:0 14px;font-size:14px;border-width:1px}
 
-@media(max-width:820px){
- .links{display:none;position:absolute;top:56px;left:0;right:0;background:#000;flex-direction:column;align-items:flex-start;padding:18px 24px;border-bottom:1px solid #111}
- .links.open{display:flex}.menu{display:block}
+/* footer: the bottom flag band again */
+footer{border-top:var(--band) solid var(--sky);padding:28px 0;color:var(--steel);font-size:14px}
+
+@media(max-width:600px){.hero{min-height:0}}
+@media(max-width:860px){
+  .menu{display:block}
+  .links{display:none;position:absolute;top:64px;left:0;right:0;background:var(--white);flex-direction:column;align-items:flex-start;gap:4px;padding:12px 24px 20px;border-bottom:1px solid var(--line)}
+  .links.open{display:flex}
+  .links>a{padding:10px 0}
+  #authArea{padding-top:12px;border-top:1px solid var(--line);width:100%}
 }
-@media(prefers-reduced-motion:reduce){.track{animation:none}html{scroll-behavior:auto}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 
-<nav>
+<nav aria-label="Main">
  <div class="wrap">
-  <a class="brand" href="#home"><img id="logo" alt="" src=""><span id="siteName"></span></a>
+  <a class="brand" href="#home"><img id="logo" alt="" src="/logo.webp" width="36" height="36"><span id="siteName">Chicago City Roleplay</span></a>
   <div class="links" id="links">
-   <a href="#home">Home</a>
    <a href="#about">About</a>
    <a href="#reviews">Reviews</a>
    <a href="#team">Team</a>
    <a href="/verify">Verification</a>
-   <a id="panelLink" href="#">Moderation panel</a>
+   <a id="panelLink" href="/panel">Moderation panel</a>
    <span id="authArea">
-    <a class="btn primary" id="loginBtn" href="#"><svg viewBox="0 0 24 24"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.2.5a18 18 0 0 0-6.4 0L8.6 3a19.8 19.8 0 0 0-4.9 1.4C.6 9 0 13.5.3 18a20 20 0 0 0 6 3l.8-1.3a13 13 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.300.7-2 1l.8 1.300a20 20 0 0 0 6-3c.5-5.200-.9-9.700-3.800-13.600zM8.700 15.300c-1.200 0-2.200-1.100-2.200-2.400s1-2.400 2.200-2.400 2.200 1.100 2.200 2.400-1 2.400-2.200 2.400zm6.600 0c-1.200 0-2.200-1.100-2.200-2.400s1-2.400 2.200-2.400 2.200 1.100 2.200 2.400-1 2.400-2.200 2.400z"/></svg>Login with Discord</a>
-    <span class="userbox hidden" id="userBox"><img id="userPfp" alt=""><span id="userName"></span><button class="btn" id="logoutBtn">Sign out</button></span>
+    <a class="btn solid" id="loginBtn" href="/auth/login?mode=public"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.2.5a18 18 0 0 0-6.4 0L8.6 3a19.8 19.8 0 0 0-4.9 1.4C.6 9 0 13.5.3 18a20 20 0 0 0 6 3l.8-1.3a13 13 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l.8 1.3a20 20 0 0 0 6-3c.5-5.2-.9-9.7-3.8-13.6zM8.7 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm6.6 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"/></svg>Sign in with Discord</a>
+    <span class="userbox hidden" id="userBox"><img id="userPfp" alt="" width="30" height="30"><span id="userName" translate="no"></span><button class="btn" id="logoutBtn" type="button">Sign out</button></span>
    </span>
   </div>
-  <button class="menu" id="menuBtn" aria-label="Menu">&#9776;</button>
+  <button class="menu" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="links">&#9776;</button>
  </div>
 </nav>
 
 <header class="hero" id="home">
- <div class="wrap">
-  <h1 id="heroTitle"></h1>
-  <div class="tag"><span id="heroSub"></span><span class="chip">Community</span></div>
+ <div class="field wrap">
+  <h1 id="heroTitle">Chicago City Roleplay</h1>
+  <div class="stars" aria-hidden="true"><svg viewBox="0 0 100 100"><polygon points="50.0,0.0 62.0,29.2 93.3,25.0 74.0,50.0 93.3,75.0 62.0,70.8 50.0,100.0 38.0,70.8 6.7,75.0 26.0,50.0 6.7,25.0 38.0,29.2"/></svg><svg viewBox="0 0 100 100"><polygon points="50.0,0.0 62.0,29.2 93.3,25.0 74.0,50.0 93.3,75.0 62.0,70.8 50.0,100.0 38.0,70.8 6.7,75.0 26.0,50.0 6.7,25.0 38.0,29.2"/></svg><svg viewBox="0 0 100 100"><polygon points="50.0,0.0 62.0,29.2 93.3,25.0 74.0,50.0 93.3,75.0 62.0,70.8 50.0,100.0 38.0,70.8 6.7,75.0 26.0,50.0 6.7,25.0 38.0,29.2"/></svg><svg viewBox="0 0 100 100"><polygon points="50.0,0.0 62.0,29.2 93.3,25.0 74.0,50.0 93.3,75.0 62.0,70.8 50.0,100.0 38.0,70.8 6.7,75.0 26.0,50.0 6.7,25.0 38.0,29.2"/></svg></div>
+  <p class="sub" id="heroSub"></p>
   <div class="cta">
-   <a class="btn primary" id="playBtn" href="#" target="_blank" rel="noopener">Play</a>
-   <a class="btn" id="discordBtn" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.2.5a18 18 0 0 0-6.4 0L8.6 3a19.8 19.8 0 0 0-4.9 1.4C.6 9 0 13.5.3 18a20 20 0 0 0 6 3l.8-1.3a13 13 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.300.7-2 1l.8 1.300a20 20 0 0 0 6-3c.5-5.200-.9-9.700-3.800-13.600zM8.700 15.300c-1.200 0-2.200-1.100-2.200-2.400s1-2.400 2.200-2.400 2.200 1.100 2.200 2.400-1 2.400-2.200 2.400zm6.600 0c-1.200 0-2.200-1.100-2.200-2.400s1-2.400 2.200-2.400 2.200 1.100 2.200 2.400-1 2.400-2.200 2.400z"/></svg>Discord</a>
+   <a class="btn red" id="playBtn" href="#" target="_blank" rel="noopener">Play now</a>
+   <a class="btn" id="discordBtn" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.2.5a18 18 0 0 0-6.4 0L8.6 3a19.8 19.8 0 0 0-4.9 1.4C.6 9 0 13.5.3 18a20 20 0 0 0 6 3l.8-1.3a13 13 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l.8 1.3a20 20 0 0 0 6-3c.5-5.2-.9-9.7-3.8-13.6zM8.7 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm6.6 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"/></svg>Join the Discord</a>
   </div>
  </div>
 </header>
 
-<section class="about" id="about">
+<main id="main">
+<section id="about" aria-labelledby="aboutH">
  <div class="wrap">
-  <h2>About<i>.</i></h2>
-  <div class="rule"></div>
-  <div id="aboutRows"></div>
+  <h2 id="aboutH">About</h2>
+  <div class="rows" id="aboutRows"></div>
  </div>
 </section>
 
-<section class="reviews" id="reviews">
+<section class="reviews" id="reviews" aria-labelledby="reviewsH">
  <div class="wrap">
-  <div class="rhead"><h2>Reviews<i>.</i></h2><div class="arrows"><button class="btn" id="revPrev" aria-label="Previous reviews">&#8249;</button><button class="btn" id="revNext" aria-label="Next reviews">&#8250;</button></div></div>
-  <div class="rule"></div>
+  <div class="rhead"><h2 id="reviewsH">Reviews</h2><div class="arrows"><button class="btn" id="revPrev" type="button" aria-label="Previous reviews">&#8249;</button><button class="btn" id="revNext" type="button" aria-label="Next reviews">&#8250;</button></div></div>
  </div>
- <div class="marquee"><div class="track" id="track"></div></div>
- <p class="loved">Loved by our <b>players</b></p>
+ <div class="strip"><div class="track" id="track"></div></div>
  <div class="wrap">
-  <div class="form" id="reviewForm">
-   <div class="rate" id="rate"></div>
-   <textarea id="reviewText" maxlength="240" placeholder="Write your review"></textarea>
-   <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-    <button class="btn primary" id="postBtn">Post review</button>
-    <span class="note" id="reviewNote"></span>
+  <div class="form hidden" id="reviewForm">
+   <div class="rate" id="rate" role="group" aria-label="Rating"></div>
+   <label for="reviewText">Your review</label>
+   <textarea id="reviewText" name="review" maxlength="240" autocomplete="off" placeholder="What you like about the server…"></textarea>
+   <div class="post">
+    <button class="btn solid" id="postBtn" type="button">Post review</button>
+    <span class="note" id="reviewNote" aria-live="polite"></span>
    </div>
   </div>
-  <p class="note hidden" id="reviewLogin" style="margin-top:34px">Login with Discord to leave a review.</p>
+  <p class="note hidden" id="reviewLogin">Sign in with Discord to leave a review.</p>
  </div>
 </section>
 
-<section class="team" id="team">
+<section id="team" aria-labelledby="teamH">
  <div class="wrap">
-  <h2>The team<i>.</i></h2>
-  <div class="rule"></div>
+  <h2 id="teamH">The team</h2>
   <div class="tgrid" id="tgrid"></div>
  </div>
 </section>
+</main>
 
-<footer id="footer"></footer>
+<footer><div class="wrap" id="footer"></div></footer>
 
 <script src="home.js"></script>
 </body>

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#121212">
-<title>Ohio Moderation</title>
+<title>Chicago Moderation</title>
 <link rel="icon" type="image/webp" href="/logo.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,7 +34,7 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
   html { scrollbar-color: var(--border-hi) transparent; }
-  body { background: var(--bg); color: var(--text); display: flex; }
+  body { background: var(--bg); color: var(--text); display: flex; touch-action: manipulation; }
 
   /* ---------- Sidebar ---------- */
   .sidebar {
@@ -335,6 +335,7 @@
   }
   .lm-map.nogrid { background-image: none; }
   .lm-map.grabbing { cursor: grabbing; }
+  .lm-map:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   .lm-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
   .lm-stage img { display: block; width: 100%; height: 100%; pointer-events: none; user-select: none; }
   #lmLayer { position: absolute; inset: 0; }

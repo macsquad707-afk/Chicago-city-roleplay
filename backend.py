@@ -7,10 +7,11 @@ What it does
   - Stores moderation logs, shifts, strikes, command history and server logs in one SQLite file, so every
     staff member sees the same data.
   - Talks to ER:LC for you (players, bans, logs, commands) so your server key never reaches the browser.
-  - Serves index.html at "/".
+  - Serves the site: the SvelteKit app in web/, built into web/build.
 
 Run it
   pip install flask requests
+  cd web && npm install && npm run build && cd ..
   python backend.py
 
 Fill in the CONFIG section below first. Secrets come from environment variables, not this file:
@@ -50,7 +51,7 @@ PORT = 3000
 SITE_URL = "https://refugees-christine-between-christmas.trycloudflare.com"    # public address of the site, no trailing slash (use https:// when live)
 SECRET_KEY = os.environ["SECRET_KEY"]   # signs login cookies; make it long and random
 DB_PATH = "panel.db"
-STATIC_DIR = "."                          # folder holding index.html and an optional img/ folder
+BUILD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "build")   # the built site (cd web && npm run build)
 
 # Discord application (discord.com/developers). Add SITE_URL + "/auth/callback" under OAuth2 > Redirects.
 DISCORD_CLIENT_ID = "1513580238997815526"
@@ -383,12 +384,12 @@ def allowed(u, perm):
     return perm in u["perms"]
 
 
-def callback_url():
+def callback_url(path="auth/callback"):
     # Local visits come back to localhost; everything else (e.g. the tunnel) uses SITE_URL.
     # Discord only accepts redirect URIs registered in the dev portal, so a forged Host header can't redirect elsewhere.
     if request.host.split(":")[0] in ("localhost", "127.0.0.1"):
-        return request.host_url + "auth/callback"
-    return SITE_URL + "/auth/callback"
+        return request.host_url + path
+    return SITE_URL + "/" + path
 
 
 @app.get("/auth/login")
@@ -1791,7 +1792,7 @@ def verify_start():
     session["rbx"] = {"state": state, "verifier": verifier}
     challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
     return redirect("https://apis.roblox.com/oauth/v1/authorize?" + urlencode({
-        "client_id": ROBLOX_CLIENT_ID, "redirect_uri": SITE_URL + "/verify/callback", "scope": "openid profile",
+        "client_id": ROBLOX_CLIENT_ID, "redirect_uri": callback_url("verify/callback"), "scope": "openid profile",
         "response_type": "code", "state": state, "code_challenge": challenge, "code_challenge_method": "S256"}))
 
 
@@ -1809,7 +1810,7 @@ def verify_callback():
     try:
         t = requests.post("https://apis.roblox.com/oauth/v1/token", data={
             "client_id": ROBLOX_CLIENT_ID, "client_secret": ROBLOX_CLIENT_SECRET, "grant_type": "authorization_code",
-            "code": code, "redirect_uri": SITE_URL + "/verify/callback", "code_verifier": rbx["verifier"]}, timeout=10)
+            "code": code, "redirect_uri": callback_url("verify/callback"), "code_verifier": rbx["verifier"]}, timeout=10)
         if t.status_code != 200:
             return redirect("/verify?error=failed")
         me = requests.get("https://apis.roblox.com/oauth/v1/userinfo",
@@ -1838,18 +1839,7 @@ def page_verified():
     v = session.get("verified")
     if not v:
         return redirect("/verify")
-    from html import escape
-    with open(os.path.join(STATIC_DIR, "verified.html"), encoding="utf-8") as f:
-        page = f.read()
-    for key, val in (("__RNAME__", v["roblox_username"]), ("__RID__", v["roblox_id"]), ("__DID__", v["discord_id"]),
-                     ("__GUILD__", f"https://discord.com/channels/{DISCORD_GUILD_ID}")):
-        page = page.replace(key, escape(str(val)))   # filled in here, so the page doesn't need any script
-    return page
-
-
-@app.get("/verified.js")
-def page_verified_js():
-    return send_from_directory(STATIC_DIR, "verified.js")
+    return spa()
 
 
 @app.get("/api/verify/me")
@@ -1861,64 +1851,48 @@ def verify_me():
 
 
 # ------------------------------------------------------------------------------ pages
+# The site is the SvelteKit app in web/. `npm run build` there writes BUILD_DIR, where every page is the same
+# 200.html shell; the routes below only decide who may load it.
+def spa():
+    path = os.path.join(BUILD_DIR, "200.html")
+    if not os.path.exists(path):
+        return "The site isn't built yet. Run: cd web && npm install && npm run build", 503
+    with open(path, encoding="utf-8") as f:
+        page = f.read()
+    # SvelteKit starts the app with one inline script; the CSP allows exactly that script by its hash
+    g.script_hashes = " ".join("'sha256-%s'" % base64.b64encode(hashlib.sha256(js.encode()).digest()).decode()
+                               for js in re.findall(r"<script>(.*?)</script>", page, re.S))
+    return page
+
+
 @app.get("/")
 def page_home():
-    return send_from_directory(STATIC_DIR, "home.html")
+    return spa()
 
 
 @app.get("/panel")
 def page_panel():
     if not current_user():
         return redirect("/login")
-    return send_from_directory(STATIC_DIR, "index.html")
-
-
-@app.get("/home.js")
-def page_home_js():
-    return send_from_directory(STATIC_DIR, "home.js")
+    return spa()
 
 
 @app.get("/verify")
 def page_verify():
-    return send_from_directory(STATIC_DIR, "verify.html")
-
-
-@app.get("/verify.js")
-def page_verify_js():
-    return send_from_directory(STATIC_DIR, "verify.js")
-
-
-LOGIN_ERRORS = {
-    "login": "Discord sign-in didn't finish. Sign in again.",
-    "noaccess": "This Discord account has no staff role in the server. Ask an admin for one, then sign in again.",
-}
+    return spa()
 
 
 @app.get("/login")
 def page_login():
     if current_user():
         return redirect("/panel")
-    with open(os.path.join(STATIC_DIR, "login.html")) as f:
-        page = f.read()
-    msg = LOGIN_ERRORS.get(request.args.get("error"))
-    if msg:
-        page = page.replace("<!--error-->", f'<div class="error" role="alert">{msg}</div>')
-    return page
+    return spa()
 
 
-@app.get("/panel.js")
-def page_js():
-    return send_from_directory(STATIC_DIR, "panel.js")
-
-
-@app.get("/logo.webp")
-def page_logo():
-    return send_from_directory(STATIC_DIR, "logo.webp")
-
-
-@app.get("/img/<path:name>")
-def page_img(name):
-    return send_from_directory(STATIC_DIR + "/img", name)
+@app.get("/<path:name>")
+def page_file(name):
+    # built JS/CSS (_app/) and everything from web/static (logo, images). Hashed _app/immutable files never change.
+    return send_from_directory(BUILD_DIR, name, max_age=31536000 if name.startswith("_app/immutable/") else None)
 
 
 CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
@@ -1932,7 +1906,8 @@ def headers(resp):
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["X-Frame-Options"] = "DENY"
     resp.headers["Referrer-Policy"] = "same-origin"
-    resp.headers["Content-Security-Policy"] = CSP
+    resp.headers["Content-Security-Policy"] = CSP.replace("script-src 'self'", "script-src 'self' " + g.script_hashes, 1) \
+        if g.get("script_hashes") else CSP
     if SITE_URL.startswith("https://"):
         resp.headers["Strict-Transport-Security"] = "max-age=31536000"
     if request.path.startswith("/api/"):

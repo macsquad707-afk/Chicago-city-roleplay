@@ -3,74 +3,67 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#121212">
-<title>Sign in | Ohio Moderation</title>
+<meta name="theme-color" content="#41b6e6">
+<title>Sign in | Chicago Moderation</title>
 <link rel="icon" type="image/webp" href="/logo.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
 <style>
-  /* Same tokens as index.html so signing in doesn't feel like a different site. Dark only, like the panel. */
+  /* Same flag tokens as the public site (Home.html), so signing in starts from the site staff already know. */
   :root {
-    color-scheme: dark;
-    --bg: #121212;
-    --border: #262626;
-    --ink: #ececec;
-    --muted: #a3a3a3;
-    --label: #858585;
-    --discord: #5865f2;
-    --discord-hover: #4752c4;
-    --danger: #f87171;
-    font-family: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+    color-scheme: light;
+    --white: #fff; --sky: #41b6e6; --red: #e4002b; --ink: #14212b; --steel: #5b6770; --line: #dde4ea;
+    --discord: #5865f2; --discord-hover: #4752c4;
+    font-family: "Archivo", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body {
-    min-height: 100dvh; background: var(--bg); color: var(--ink);
+    min-height: 100dvh; background: var(--white); color: var(--ink);
     display: grid; place-items: center;
+    border-top: 16px solid var(--sky);
     padding: 24px 16px 12vh;   /* extra bottom space sits the column slightly above center */
   }
   main { width: 100%; max-width: 400px; }
-  .logo { display: block; width: 64px; height: 64px; object-fit: contain; margin: 0 0 20px; }
+  .logo { display: block; width: 64px; height: 64px; object-fit: contain; margin: 0 0 24px; }
 
   h1 {
-    font-size: clamp(30px, 6vw, 38px); font-weight: 700;
-    line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 12px;
+    font-stretch: 68%; font-weight: 850; text-transform: uppercase;
+    font-size: clamp(48px, 12vw, 64px); line-height: .88; margin: 0 0 16px; text-wrap: balance;
   }
-  .lede { color: var(--muted); font-size: 16px; line-height: 1.55; margin: 0 0 32px; max-width: 34ch; }
+  .lede { color: var(--steel); font-size: 17px; line-height: 1.55; margin: 0 0 32px; max-width: 34ch; }
 
   .error {
-    color: var(--danger); font-size: 14.5px; line-height: 1.5;
-    border-left: 2px solid var(--danger); padding: 2px 0 2px 12px; margin: 0 0 24px;
+    color: #7a0017; background: #fdeef1; font-size: 15px; line-height: 1.5; font-weight: 500;
+    border-left: 4px solid var(--red); padding: 10px 14px; margin: 0 0 24px;
   }
 
   .discord {
     display: flex; align-items: center; justify-content: center; gap: 12px;
-    width: 100%; min-height: 50px; padding: 0 20px; border-radius: 10px;
+    width: 100%; min-height: 52px; padding: 0 20px; border-radius: 4px;
     background: var(--discord); color: #fff; text-decoration: none;
-    font-size: 16px; font-weight: 600;
-    transition: background-color .15s ease, transform .1s ease;
+    font-size: 17px; font-weight: 700;
+    transition: background-color .15s ease;
   }
   .discord:hover { background: var(--discord-hover); }
-  .discord:active { transform: scale(.98); }
-  .discord:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .discord:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; }
   .discord svg { width: 22px; height: 22px; flex: none; }
 
   .note {
-    color: var(--label); font-size: 13.5px; line-height: 1.55;
-    border-top: 1px solid var(--border); padding-top: 16px; margin: 28px 0 0;
+    color: var(--steel); font-size: 14px; line-height: 1.55;
+    border-top: 1px solid var(--line); padding-top: 16px; margin: 28px 0 0;
   }
 
   @media (prefers-reduced-motion: reduce) {
     .discord { transition: none; }
-    .discord:active { transform: none; }
   }
 </style>
 </head>
 <body>
 <main>
   <img class="logo" src="/logo.webp" alt="" width="64" height="64">
-  <h1>Ohio Moderation</h1>
+  <h1>Chicago Moderation</h1>
   <p class="lede">For server staff. Sign in with the Discord account you use in the server.</p>
   <!--error-->
   <a class="discord" href="/auth/login">

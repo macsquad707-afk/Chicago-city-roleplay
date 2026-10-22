@@ -3,65 +3,51 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#41b6e6">
 <title>Verification</title>
-<link rel="icon" id="favicon" href="">
+<link rel="icon" id="favicon" href="/logo.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
 <style>
-:root{--card:#090b11;--line:#16203d;--blue:#2563eb;--sky:#60a5fa;--muted:#8a93a8}
+:root{color-scheme:light;--white:#fff;--sky:#41b6e6;--red:#e4002b;--ink:#14212b;--steel:#5b6770;--line:#dde4ea;--mist:#f3f6f8;font-family:'Archivo',system-ui,sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;color:#fff;font-family:'Poppins',system-ui,sans-serif;line-height:1.5;
-  background:radial-gradient(900px 560px at 85% 20%,rgba(37,99,235,.28),transparent 70%),radial-gradient(700px 500px at 0% 100%,rgba(37,99,235,.14),transparent 70%),#03050b}
-a{color:inherit;text-decoration:none}
-.top{display:flex;align-items:center;gap:10px;padding:18px 24px;font-weight:600}
-.top img{width:34px;height:34px;object-fit:contain}
-.wrap{max-width:600px;margin:0 auto;padding:36px 24px 64px}
-.tag{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:13px;margin-bottom:26px}
-.tag b{background:var(--blue);padding:6px 14px;letter-spacing:.06em;text-transform:uppercase;font-size:12px}
-.tag span{padding:6px 14px;background:rgba(9,11,17,.8)}
-h1{font-size:clamp(36px,7vw,56px);font-weight:800;letter-spacing:-.035em;line-height:1.02}
-h1 i{font-style:normal;color:var(--sky)}
-.lead{color:#b5bdd0;margin:20px 0 32px;max-width:48ch}
-.card{background:rgba(9,11,17,.85);border:1px solid var(--line);border-radius:20px;overflow:hidden}
-.chead{display:flex;align-items:center;gap:14px;padding:20px 24px;border-bottom:1px solid var(--line)}
-.chead img{width:44px;height:44px;object-fit:contain;background:#0d1530;border-radius:12px;padding:5px}
-.chead b{display:block;font-size:15px}
-.chead span{font-size:13px;color:var(--muted)}
-.body{padding:24px;display:grid;gap:18px}
-.go{display:flex;align-items:center;gap:16px;padding:18px 20px;border-radius:14px;background:linear-gradient(90deg,#1d4ed8,#2563eb 60%,#1e88e5);transition:filter .15s,transform .15s}
-.go:hover{filter:brightness(1.1);transform:translateY(-1px)}
-.go .ico{width:46px;height:46px;border-radius:12px;background:#0b0d14;display:grid;place-items:center;flex:none}
-.go .ico i{width:18px;height:18px;border:3px solid #fff;border-radius:4px;transform:rotate(12deg)}
-.go strong{display:block;font-size:19px}
-.go small{font-size:13px;opacity:.85}
-.go .arr{margin-left:auto;font-size:22px}
-.info{background:#0b0e18;border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-size:13px;color:#c4cad8}
-.info b{color:#fff}
-.info a{display:inline-block;margin-top:6px;color:var(--sky);font-weight:600}
-.fine{font-size:12px;color:var(--muted)}
-.alert{background:#2a1218;border:1px solid #6b1f2c;color:#ffc9d0;border-radius:12px;padding:12px 16px;font-size:14px;margin-bottom:18px}
-.hidden{display:none}
-.back{display:inline-block;margin-top:28px;color:var(--sky);font-weight:600;font-size:14px}
+html{-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;min-height:100dvh;background:var(--white);color:var(--ink);line-height:1.55;border-top:16px solid var(--sky);touch-action:manipulation}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--sky);outline-offset:3px}
+.hidden{display:none!important}
+.top{display:flex;align-items:center;gap:10px;max-width:640px;margin:0 auto;padding:20px 24px 0;font-weight:700;text-decoration:none}
+.top img{width:36px;height:36px;object-fit:contain}
+.wrap{max-width:640px;margin:0 auto;padding:clamp(40px,8vh,80px) 24px 64px}
+h1{font-stretch:68%;font-weight:850;font-size:clamp(52px,11vw,96px);line-height:.88;text-transform:uppercase;text-wrap:balance}
+.lead{color:var(--steel);font-size:18px;margin:20px 0 32px;max-width:44ch}
+.alert{border-left:4px solid var(--red);background:#fdeef1;color:#7a0017;padding:12px 16px;margin-bottom:24px;font-weight:500}
+.go{display:flex;align-items:center;gap:16px;min-height:76px;padding:0 22px;border-radius:4px;background:var(--ink);color:var(--white);text-decoration:none;transition:background-color .15s}
+.go:hover{background:#26394a}
+.go .mark{width:22px;height:22px;border:4px solid currentColor;border-radius:3px;transform:rotate(15deg);flex:none}
+.go strong{display:block;font-size:20px;font-weight:700}
+.go small{font-size:14px;opacity:.8}
+.go .arr{margin-left:auto;font-size:24px}
+.info{margin-top:20px;background:var(--mist);border-radius:4px;padding:18px 20px}
+.info b{font-weight:700}
+.info a{display:inline-block;margin-top:6px;font-weight:700;text-decoration-color:var(--sky);text-decoration-thickness:2px;text-underline-offset:3px}
+.fine{margin-top:20px;font-size:14px;color:var(--steel)}
+.back{display:inline-block;margin-top:32px;font-weight:600;text-underline-offset:3px}
+@media(prefers-reduced-motion:reduce){.go{transition:none}}
 </style>
 </head>
 <body>
-<div class="top"><img id="logo" alt=""><span id="siteName"></span></div>
+<a class="top" href="/"><img id="logo" alt="" src="/logo.webp" width="36" height="36"><span id="siteName">Chicago City Roleplay</span></a>
 <main class="wrap">
-  <div class="tag"><b id="tagName"></b><span>Account verification</span></div>
-  <h1>Sign in with Roblox to get <i>verified.</i></h1>
+  <h1>Get verified</h1>
   <p class="lead" id="lead"></p>
   <div class="alert hidden" id="alert" role="alert"></div>
-  <div class="card">
-    <div class="chead"><img id="logo2" alt=""><div><b id="cardTitle"></b><span id="cardSub"></span></div></div>
-    <div class="body">
-      <a class="go" id="go" href="#"><span class="ico"><i></i></span><span><strong>Continue with Roblox</strong><small>Opens Roblox's sign-in page</small></span><span class="arr">&rarr;</span></a>
-      <div class="info"><b id="newTo"></b> The verify command runs from inside our Discord. Jump in first.<br><a id="discord" href="#" target="_blank" rel="noopener">Join our Discord &rarr;</a></div>
-      <p class="fine">Roblox only shares what you approve on its page, and your password is never shared with us. You can revoke access any time in your Roblox account settings.</p>
-    </div>
-  </div>
-  <a class="back" href="/">&larr; Back to home</a>
+  <a class="go" id="go" href="/verify/start"><span class="mark" aria-hidden="true"></span><span><strong>Continue with Roblox</strong><small>Opens Roblox's sign-in page</small></span><span class="arr" aria-hidden="true">&rarr;</span></a>
+  <div class="info"><b id="newTo"></b> The verify command runs from inside our Discord, so join it first.<br><a id="discord" href="#" target="_blank" rel="noopener">Join our Discord</a></div>
+  <p class="fine">Roblox only shares what you approve on its page, and your password is never shared with us. You can revoke access any time in your Roblox account settings.</p>
+  <a class="back" href="/">Back to home</a>
 </main>
-<script src="verify.js"></script>
+<script src="/verify.js"></script>
 </body>
 </html>

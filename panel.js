@@ -236,7 +236,7 @@
         <div class="modal-body">
           <div class="types" id="mTypes"></div>
           <label class="field"><span>Player <em>*</em></span>
-            <input id="mPlayer" type="text" placeholder="Roblox username" autocomplete="off" list="mPlayerList">
+            <input id="mPlayer" type="text" placeholder="Roblox username…" autocomplete="off" list="mPlayerList">
             <datalist id="mPlayerList">${PLAYERS.map(p => `<option value="${esc(p.name)}"></option>`).join("")}</datalist>
             <small>Pick someone in game or type a Roblox username.</small>
           </label>
@@ -244,7 +244,7 @@
             <input id="mDur" type="text" placeholder="e.g. 3 days" autocomplete="off">
           </label>
           <label class="field"><span>Reason <em>*</em></span>
-            <textarea id="mReason" placeholder="What happened, and which rule it broke"></textarea>
+            <textarea id="mReason" placeholder="What happened, and which rule it broke…"></textarea>
           </label>
           <label class="field"><span>Evidence</span>
             <input id="mEvidence" type="text" placeholder="https://medal.tv/…" autocomplete="off">
@@ -547,7 +547,7 @@
         [data ? fmtDur(week) : "–", "This week"],
         [data ? data.logs7d : "–", "Logs (7d)"],
         [`<span class="strikes" role="img" aria-label="${m.strikes} of ${MAX_STRIKES} strikes">${Array.from({ length: MAX_STRIKES }, (_, i) => `<i class="${i < m.strikes ? "on" : ""}"></i>`).join("")}</span>`, "Strikes"],
-        [esc(new Date(m.since).toLocaleDateString("en-US")), "Staff since"]
+        [esc(new Date(m.since).toLocaleDateString()), "Staff since"]
       ].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join("");
       if (!data) return;
       $("pfTabs").innerHTML = [["history", "history", "History", data.history.length], ["shifts", "shifts", "Shifts", data.shifts.length]]
@@ -723,7 +723,7 @@
          + ACTIVE_SHIFTS.filter(a => a.name === name).reduce((t, a) => t + activeSeconds(a), 0);
   };
   const fmtClock = sec => { const t = Math.floor(sec), z = n => String(n).padStart(2, "0"); return `${Math.floor(t / 3600)}:${z(Math.floor(t % 3600 / 60))}:${z(t % 60)}`; };
-  const fmtDateTime = ms => new Date(ms).toLocaleString("en-US", { month: "2-digit", day: "2-digit", year: "numeric", hour: "numeric", minute: "2-digit" }).replace(", ", " ");
+  const fmtDateTime = ms => new Date(ms).toLocaleString(undefined, { month: "2-digit", day: "2-digit", year: "numeric", hour: "numeric", minute: "2-digit" }).replace(", ", " ");
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -742,7 +742,7 @@
   // Quota weeks run Monday 00:00 UTC to Monday 00:00 UTC, same as backend.py.
   const nextWeekStart = () => { const d = new Date(); d.setUTCHours(0, 0, 0, 0); d.setUTCDate(d.getUTCDate() + ((8 - d.getUTCDay()) % 7 || 7)); return d.getTime(); };
   const isoDay = ms => new Date(ms).toISOString().slice(0, 10);
-  const fmtDay = iso => new Date(iso + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  const fmtDay = iso => new Date(iso + "T00:00:00Z").toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
 
   // Small dialog around a form. onSubmit(form) may throw; its message shows above the buttons.
   function openForm(title, sub, body, submitLabel, onSubmit) {
@@ -813,14 +813,14 @@
     serverlogs: () => ({
       title: "Server logs",
       sub: `Joins, leaves, kills, commands and mod calls from your ER:LC server. You can look back ${LOG_RETENTION_DAYS} days, or ${COMMAND_RETENTION_DAYS} for commands.`,
-      tools: `<div class="tools-row"><label class="search">${ico("search")}<input id="logSearch" type="search" placeholder="Search a player or command" autocomplete="off" aria-label="Search logs"></label>${
+      tools: `<div class="tools-row"><label class="search">${ico("search")}<input id="logSearch" type="search" placeholder="Search a player or command…" autocomplete="off" aria-label="Search logs"></label>${
         USER_PERMS.includes("logs.clear") ? `<button class="btn-danger" id="logClear" type="button">${ico("trash")}Clear logs</button>` : ""}</div>`
     }),
     bans: () => ({
       title: "Bans",
       sub: `${BANS.length} banned on the ER:LC server \u00B7 checked ${timeAgo(bansCheckedAt)}`,
       tools: `<div class="tools-row">
-        <label class="search">${ico("search")}<input id="banSearch" type="search" placeholder="Name or user ID" autocomplete="off" aria-label="Search bans"></label>
+        <label class="search">${ico("search")}<input id="banSearch" type="search" placeholder="Name or user ID…" autocomplete="off" aria-label="Search bans"></label>
         <button class="btn-ghost btn-sm" id="banRefresh" type="button">${ico("refresh")}Refresh</button>
         <button class="btn-danger" id="banAdd" type="button">${ico("bans")}Ban someone</button>
       </div>`
@@ -835,7 +835,7 @@
     players:  () => ({
       title: "Players",
       sub: `${PLAYERS.length} of ${MAX_PLAYERS} in game`,
-      tools: `<label class="search">${ico("search")}<input id="playerSearch" type="search" placeholder="Search name or callsign" autocomplete="off" aria-label="Search players"></label>`
+      tools: `<label class="search">${ico("search")}<input id="playerSearch" type="search" placeholder="Search name or callsign…" autocomplete="off" aria-label="Search players"></label>`
     })
   };
 
@@ -1319,7 +1319,7 @@
           <div class="filter-row">
             <div class="pills" id="staffPills" style="margin:0"></div>
             <span class="spacer"></span>
-            <label class="search">${ico("search")}<input id="staffSearch" type="search" placeholder="Search staff" autocomplete="off" aria-label="Search staff" value="${esc(query)}"></label>
+            <label class="search">${ico("search")}<input id="staffSearch" type="search" placeholder="Search staff…" autocomplete="off" aria-label="Search staff" value="${esc(query)}"></label>
           </div>
           <div id="staffTable"></div>`;
         document.getElementById("staffSearch").addEventListener("input", e => { query = e.target.value; drawTeam(); });
@@ -1766,6 +1766,14 @@
         zoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX - r.left, e.clientY - r.top);
       }, { passive: false });
 
+      // keyboard: arrows pan, +/- zoom
+      map.addEventListener("keydown", e => {
+        const step = 80, d = { ArrowLeft: [step, 0], ArrowRight: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] }[e.key];
+        if (d) { e.preventDefault(); view.tx += d[0]; view.ty += d[1]; apply(); }
+        else if (e.key === "+" || e.key === "=") zoomCenter(1.4);
+        else if (e.key === "-") zoomCenter(1 / 1.4);
+      });
+
       // buttons
       $("lmGrid").onclick = e => { const off = map.classList.toggle("nogrid"); e.currentTarget.setAttribute("aria-pressed", String(!off)); };
       $("lmReset").onclick = fitView;
@@ -1948,12 +1956,12 @@
           <div class="lm-head">
             <h2>Live map</h2>
             <p id="lmSub"></p>
-            <label class="search">${ico("search")}<input id="lmSearch" type="search" placeholder="Find a player" autocomplete="off" aria-label="Find a player"></label>
+            <label class="search">${ico("search")}<input id="lmSearch" type="search" placeholder="Find a player…" autocomplete="off" aria-label="Find a player"></label>
             <div class="pills" id="lmPills"></div>
           </div>
           <div class="lm-list" id="lmList"></div>
         </aside>
-        <div class="lm-map" id="lmMap">
+        <div class="lm-map" id="lmMap" tabindex="0" aria-label="Map. Arrow keys pan, plus and minus zoom.">
           <div class="lm-stage" id="lmStage">
             <img id="lmImg" src="${esc(MAP_URL)}" alt="ER:LC map" draggable="false" referrerpolicy="no-referrer">
             <div id="lmLayer"></div>
@@ -2034,7 +2042,7 @@
 
   sidebar.innerHTML = `
     <div class="side-top">
-      <span class="side-name"><img src="/logo.webp" alt="" width="28" height="28"><span class="lbl">Ohio Moderation</span></span>
+      <span class="side-name"><img src="/logo.webp" alt="" width="28" height="28"><span class="lbl">Chicago Moderation</span></span>
       <button class="side-toggle" id="sideToggle" type="button" aria-expanded="true" aria-label="Close sidebar" title="Close sidebar">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS.sidebar}</svg>
       </button>
@@ -2075,7 +2083,7 @@
     document.getElementById("headTools").innerHTML = head.tools || "";
     document.getElementById("view").innerHTML = (PAGES[page.id] || (() => '<div class="placeholder">Coming soon.</div>'))();
     if (AFTER[page.id]) { const cleanup = AFTER[page.id](); if (typeof cleanup === "function") teardown = cleanup; }
-    document.title = page.label + " | Ohio Moderation";
+    document.title = page.label + " | Chicago Moderation";
     // animate only when the page actually changes, not when the same page re-renders with fresh data
     if (page.id !== shownPage) {
       [document.getElementById("view"), document.querySelector(".page-head")].forEach(el => {
