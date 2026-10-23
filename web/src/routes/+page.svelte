@@ -6,8 +6,8 @@
 
 	/* ================= CONFIG: edit these ================= */
 	const HERO_IMAGE = ''; // optional background photo, e.g. "/img/hero.jpg"
-	const HERO_TITLE = ['OHIO STATE', 'ROLEPLAY'];
-	const HERO_SUB = "Ohio's #1 Roleplay";
+	const HERO_TITLE = ['CHICAGO STATE', 'ROLEPLAY'];
+	const HERO_SUB = "Chicago's #1 Roleplay";
 	const PLAY_URL = '#'; // ERLC server link for the Play button (hardcode later)
 	const PANEL_URL = '/panel'; // backend checks staff access
 	const LOGIN_URL = '/auth/login?mode=public'; // Discord sign-in for anyone (staff also get panel access)
@@ -18,7 +18,7 @@
 	const ABOUT_BLOCKS = [
 		{ title: 'Strict standards', sub: 'Realistic rules, enforced fairly.',
 			bullets: ['Active departments', 'Strict departments', 'Realism'], image: '/img/about-1.jpg' },
-		{ title: 'Ohio environment', sub: 'Ohio roads and cities with real character.',
+		{ title: 'Chicago environment', sub: 'Chicago roads and cities with real character.',
 			bullets: ['Highways, cities and small towns', 'Authentic local character', 'Immersive world-building'], image: '/img/about-2.jpg' }
 	];
 	const TEAM = [

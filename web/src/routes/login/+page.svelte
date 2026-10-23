@@ -11,7 +11,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign in | Ohio Moderation</title>
+	<title>Sign in | Chicago Moderation</title>
 	<meta name="theme-color" content="#121212" />
 	<link rel="icon" type="image/webp" href="/logo.webp" />
 	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -19,7 +19,7 @@
 
 <main>
 	<img class="logo" src="/logo.webp" alt="" width="64" height="64" />
-	<h1>Ohio Moderation</h1>
+	<h1>Chicago Moderation</h1>
 	<p class="lede">For server staff. Sign in with the Discord account you use in the server.</p>
 	{#if error}<div class="error" role="alert">{error}</div>{/if}
 	<a class="discord" href="/auth/login">

@@ -40,7 +40,7 @@
 		document.body.classList.toggle('side-closed', closed);
 		try { localStorage.setItem('sideClosed', closed ? '1' : ''); } catch {}
 	});
-	$effect(() => { document.title = page ? page.label + ' | Ohio Moderation' : 'Ohio Moderation'; });
+	$effect(() => { document.title = page ? page.label + ' | Chicago Moderation' : 'Chicago Moderation'; });
 	$effect(() => { if (page) document.querySelector(`.item[data-id="${page.id}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' }); });
 
 	const logout = () => api('/auth/logout', {}).catch(() => {}).finally(() => { location.href = '/login'; });
@@ -67,7 +67,7 @@
 
 <aside class="sidebar" aria-label="Moderator navigation">
 	<div class="side-top">
-		<span class="side-name"><img src="/logo.webp" alt="" width="28" height="28" /><span class="lbl">Ohio Moderation</span></span>
+		<span class="side-name"><img src="/logo.webp" alt="" width="28" height="28" /><span class="lbl">Chicago Moderation</span></span>
 		<button class="side-toggle" type="button" aria-expanded={!closed} aria-label={closed ? 'Open sidebar' : 'Close sidebar'} title={closed ? 'Open sidebar' : 'Close sidebar'} onclick={() => (closed = !closed)}>
 			<Icon name="sidebar" />
 		</button>
