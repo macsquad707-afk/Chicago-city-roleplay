@@ -48,7 +48,7 @@ if os.path.exists(_env):
 # CONFIG
 # =====================================================================================
 PORT = 3000
-SITE_URL = "https://course-italia-disco-flu.trycloudflare.com"    # public address of the site, no trailing slash (use https:// when live)
+SITE_URL = "https://panel.tarnmail.xyz"    # public address of the site, no trailing slash (use https:// when live)
 SECRET_KEY = os.environ["SECRET_KEY"]   # signs login cookies; make it long and random
 DB_PATH = "panel.db"
 BUILD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "build")   # the built site (cd web && npm run build)
