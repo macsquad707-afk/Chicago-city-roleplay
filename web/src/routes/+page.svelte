@@ -6,7 +6,7 @@
 
 	/* ================= CONFIG: edit these ================= */
 	const HERO_IMAGE = ''; // optional background photo, e.g. "/img/hero.jpg"
-	const HERO_TITLE = ['CHICAGO STATE', 'ROLEPLAY'];
+	const HERO_TITLE = ['CHICAGO CITY', 'ROLEPLAY'];
 	const HERO_SUB = "Chicago's #1 Roleplay";
 	const PLAY_URL = '#'; // ERLC server link for the Play button (hardcode later)
 	const PANEL_URL = '/panel'; // backend checks staff access

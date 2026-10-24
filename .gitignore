@@ -2,3 +2,6 @@
 panel.db*
 __pycache__/
 .claude/
+*.tar.gz
+web-src-backup/
+web-static-backup/
